@@ -15,6 +15,7 @@ import planeYellowBold from '../../assets/icons/plane-yellow-bold.png'
 import planeLightBluePattern from '../../assets/icons/plane-lightblue-pattern.png'
 import planeLightBlueOutline from '../../assets/icons/plane-lightblue-outline.png'
 import { useMapSelection } from '../../context/MapSelectionContext'
+import firBoundaries from '../../data/firBoundaries.geojson?url'
 import { firRegions } from '../../data/firRegions'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
 
@@ -105,24 +106,6 @@ function useSimulatedFleet(count: number): SimAircraft[] {
   }, [count])
 }
 
-// Approximates a circle as a GeoJSON polygon (no official FIR boundary data
-// used here — this is an illustrative highlight, not a real airspace shape).
-function circlePolygon(lng: number, lat: number, radiusKm: number, points = 64) {
-  const coords: [number, number][] = []
-  const latRad = (lat * Math.PI) / 180
-  for (let i = 0; i <= points; i++) {
-    const angle = (i / points) * 2 * Math.PI
-    const offsetLat = (radiusKm / 111.32) * Math.sin(angle)
-    const offsetLng = (radiusKm / (111.32 * Math.cos(latRad))) * Math.cos(angle)
-    coords.push([lng + offsetLng, lat + offsetLat])
-  }
-  return {
-    type: 'Feature' as const,
-    geometry: { type: 'Polygon' as const, coordinates: [coords] },
-    properties: {},
-  }
-}
-
 function aircraftIcon(onGround: boolean, verticalRate: number | null) {
   if (onGround) return planeLightBlueOutline
   if (verticalRate != null && verticalRate > 1) return planeBlueSolid
@@ -162,11 +145,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
 
   useEffect(() => {
     if (selectedFir) {
-      mapRef.current?.flyTo({
-        center: [selectedFir.lng, selectedFir.lat],
-        zoom: 6,
-        duration: 1000,
-      })
+      const [minLng, minLat, maxLng, maxLat] = selectedFir.bbox
+      mapRef.current?.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 60, duration: 1000, maxZoom: 7 },
+      )
     }
   }, [selectedFir])
 
@@ -182,24 +168,29 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))
         }
       >
-        {selectedFir && (
-          <Source
-            id="fir-highlight"
-            type="geojson"
-            data={circlePolygon(selectedFir.lng, selectedFir.lat, 180)}
-          >
-            <Layer
-              id="fir-highlight-fill"
-              type="fill"
-              paint={{ 'fill-color': '#1c80cf', 'fill-opacity': 0.12 }}
-            />
-            <Layer
-              id="fir-highlight-line"
-              type="line"
-              paint={{ 'line-color': '#1c80cf', 'line-width': 2, 'line-dasharray': [2, 2] }}
-            />
-          </Source>
-        )}
+        <Source id="fir-boundaries" type="geojson" data={firBoundaries}>
+          <Layer
+            id="fir-outline-all"
+            type="line"
+            paint={{ 'line-color': '#94a3b8', 'line-width': 1, 'line-opacity': 0.5 }}
+          />
+          {selectedFirId && (
+            <>
+              <Layer
+                id="fir-highlight-fill"
+                type="fill"
+                filter={['==', ['get', 'id'], selectedFirId]}
+                paint={{ 'fill-color': '#1c80cf', 'fill-opacity': 0.12 }}
+              />
+              <Layer
+                id="fir-highlight-line"
+                type="line"
+                filter={['==', ['get', 'id'], selectedFirId]}
+                paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
+              />
+            </>
+          )}
+        </Source>
 
         {showLive
           ? liveFleet.map((a) => (
