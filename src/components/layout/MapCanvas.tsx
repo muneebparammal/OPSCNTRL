@@ -176,11 +176,13 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           />
           {selectedFirId && (
             <>
+              {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
+                  MapLibre paint values can't reference CSS custom properties directly. */}
               <Layer
                 id="fir-highlight-fill"
                 type="fill"
                 filter={['==', ['get', 'id'], selectedFirId]}
-                paint={{ 'fill-color': '#1c80cf', 'fill-opacity': 0.12 }}
+                paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
               />
               <Layer
                 id="fir-highlight-line"
