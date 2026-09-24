@@ -168,31 +168,24 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))
         }
       >
-        <Source id="fir-boundaries" type="geojson" data={firBoundaries}>
-          <Layer
-            id="fir-outline-all"
-            type="line"
-            paint={{ 'line-color': '#94a3b8', 'line-width': 1, 'line-opacity': 0.5 }}
-          />
-          {selectedFirId && (
-            <>
-              {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
-                  MapLibre paint values can't reference CSS custom properties directly. */}
-              <Layer
-                id="fir-highlight-fill"
-                type="fill"
-                filter={['==', ['get', 'id'], selectedFirId]}
-                paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
-              />
-              <Layer
-                id="fir-highlight-line"
-                type="line"
-                filter={['==', ['get', 'id'], selectedFirId]}
-                paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
-              />
-            </>
-          )}
-        </Source>
+        {selectedFirId && (
+          <Source id="fir-boundaries" type="geojson" data={firBoundaries}>
+            {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
+                MapLibre paint values can't reference CSS custom properties directly. */}
+            <Layer
+              id="fir-highlight-fill"
+              type="fill"
+              filter={['==', ['get', 'id'], selectedFirId]}
+              paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
+            />
+            <Layer
+              id="fir-highlight-line"
+              type="line"
+              filter={['==', ['get', 'id'], selectedFirId]}
+              paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
+            />
+          </Source>
+        )}
 
         {showLive
           ? liveFleet.map((a) => (
