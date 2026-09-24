@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { MapStyleId } from '../layout/MapCanvas'
 import { Switch } from './Switch'
 
 const overlays = ['NOTAMs', 'Airport', 'Airspace', 'Country Name']
@@ -8,14 +9,18 @@ const mapTypes = [
   { id: 'satellite', label: 'Satelite', swatch: 'bg-[#4a5a3a]' },
 ] as const
 
-export function MapTypeDropdown() {
+type MapTypeDropdownProps = {
+  mapType: MapStyleId
+  onMapTypeChange: (id: MapStyleId) => void
+}
+
+export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownProps) {
   const [overlayState, setOverlayState] = useState<Record<string, boolean>>({
     'NOTAMs': false,
     'Airport': false,
     'Airspace': false,
     'Country Name': true,
   })
-  const [mapType, setMapType] = useState<(typeof mapTypes)[number]['id']>('light')
 
   return (
     <div className="w-56 overflow-hidden rounded-xl border border-border-primary bg-bg-popover py-1 shadow-popover">
@@ -45,7 +50,7 @@ export function MapTypeDropdown() {
             <button
               key={type.id}
               type="button"
-              onClick={() => setMapType(type.id)}
+              onClick={() => onMapTypeChange(type.id)}
               className="flex flex-1 flex-col items-center gap-1"
             >
               <div

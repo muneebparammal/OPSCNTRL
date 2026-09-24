@@ -1,5 +1,5 @@
-import { type ReactNode, useState } from 'react'
-import { MapCanvas } from '../layout/MapCanvas'
+import { type ReactNode, useRef, useState } from 'react'
+import { MapCanvas, type MapCanvasHandle, type MapStyleId } from '../layout/MapCanvas'
 import { NavBar } from '../layout/NavBar'
 import { QuickLinksBar } from '../layout/QuickLinksBar'
 import { SearchTabsBar } from '../layout/SearchTabsBar'
@@ -28,6 +28,9 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const [sheetOpen, setSheetOpen] = useState(defaultSheetOpen)
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
+  const [mapType, setMapType] = useState<MapStyleId>('light')
+  const [zoomPercent, setZoomPercent] = useState(100)
+  const mapRef = useRef<MapCanvasHandle>(null)
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
@@ -39,7 +42,7 @@ export function DashboardShell({
           onToggleSidebar={() => setSidebarExpanded((v) => !v)}
         />
         <div className="relative flex-1 overflow-hidden">
-          <MapCanvas />
+          <MapCanvas ref={mapRef} mapType={mapType} onZoomChange={setZoomPercent} />
 
           <div
             className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
@@ -51,6 +54,8 @@ export function DashboardShell({
               mapTypeDefaultOpen={mapTypeDefaultOpen}
               detailPanelActive={sheetOpen}
               onToggleDetailPanel={() => setSheetOpen((v) => !v)}
+              mapType={mapType}
+              onMapTypeChange={setMapType}
             />
           </div>
 
@@ -58,6 +63,10 @@ export function DashboardShell({
 
           <ZoomControls
             className={`absolute bottom-6 ${sheetOpen ? 'right-[464px]' : 'right-6'}`}
+            percent={zoomPercent}
+            onZoomIn={() => mapRef.current?.zoomIn()}
+            onZoomOut={() => mapRef.current?.zoomOut()}
+            onReset={() => mapRef.current?.resetZoom()}
           />
 
           <QuickLinksBar

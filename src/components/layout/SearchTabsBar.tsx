@@ -1,5 +1,6 @@
 import { Bookmark, Layers, PanelRight, Search, Settings } from 'lucide-react'
 import { useState } from 'react'
+import type { MapStyleId } from './MapCanvas'
 import { MapTypeDropdown } from '../ui/MapTypeDropdown'
 import { PillTabs } from '../ui/Tabs'
 
@@ -8,11 +9,15 @@ export function SearchTabsBar({
   mapTypeDefaultOpen = false,
   detailPanelActive = false,
   onToggleDetailPanel,
+  mapType,
+  onMapTypeChange,
 }: {
   narrow?: boolean
   mapTypeDefaultOpen?: boolean
   detailPanelActive?: boolean
   onToggleDetailPanel?: () => void
+  mapType: MapStyleId
+  onMapTypeChange: (id: MapStyleId) => void
 }) {
   const [showMapType, setShowMapType] = useState(mapTypeDefaultOpen)
 
@@ -69,7 +74,7 @@ export function SearchTabsBar({
         </div>
         {showMapType && (
           <div className="absolute top-11 right-0 z-30">
-            <MapTypeDropdown />
+            <MapTypeDropdown mapType={mapType} onMapTypeChange={onMapTypeChange} />
           </div>
         )}
       </div>
