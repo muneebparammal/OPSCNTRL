@@ -177,23 +177,25 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                 paint={{ 'line-color': '#94a3b8', 'line-width': 1, 'line-opacity': 0.6 }}
               />
             )}
+            {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
+                MapLibre paint values can't reference CSS custom properties directly.
+                Layer must be a direct child of Source (not wrapped in a Fragment) —
+                react-map-gl injects the `source` prop by cloning direct children. */}
             {selectedFirId && (
-              <>
-                {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
-                    MapLibre paint values can't reference CSS custom properties directly. */}
-                <Layer
-                  id="fir-highlight-fill"
-                  type="fill"
-                  filter={['==', ['get', 'id'], selectedFirId]}
-                  paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
-                />
-                <Layer
-                  id="fir-highlight-line"
-                  type="line"
-                  filter={['==', ['get', 'id'], selectedFirId]}
-                  paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
-                />
-              </>
+              <Layer
+                id="fir-highlight-fill"
+                type="fill"
+                filter={['==', ['get', 'id'], selectedFirId]}
+                paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
+              />
+            )}
+            {selectedFirId && (
+              <Layer
+                id="fir-highlight-line"
+                type="line"
+                filter={['==', ['get', 'id'], selectedFirId]}
+                paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
+              />
             )}
           </Source>
         )}
