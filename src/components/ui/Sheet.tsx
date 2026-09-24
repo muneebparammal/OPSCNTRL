@@ -12,7 +12,7 @@ type SheetProps = {
 export function Sheet({ open, onClose, children, title, hideDefaultClose = false }: SheetProps) {
   if (!open) return null
   return (
-    <div className="absolute top-[69px] right-0 z-20 h-[calc(100%-69px)] w-[440px] overflow-hidden border-l border-border-primary bg-bg-primary shadow-popover">
+    <div className="absolute top-0 right-0 z-20 h-full w-[440px] overflow-hidden border-l border-border-primary bg-bg-primary shadow-popover">
       <div className="flex h-full flex-col overflow-y-auto p-5">
         {title !== undefined ? (
           <div className="mb-5 flex w-full items-start gap-2">
