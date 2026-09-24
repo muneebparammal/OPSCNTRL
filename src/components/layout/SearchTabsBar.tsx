@@ -6,9 +6,13 @@ import { PillTabs } from '../ui/Tabs'
 export function SearchTabsBar({
   narrow = false,
   mapTypeDefaultOpen = false,
+  detailPanelActive = false,
+  onToggleDetailPanel,
 }: {
   narrow?: boolean
   mapTypeDefaultOpen?: boolean
+  detailPanelActive?: boolean
+  onToggleDetailPanel?: () => void
 }) {
   const [showMapType, setShowMapType] = useState(mapTypeDefaultOpen)
 
@@ -54,7 +58,11 @@ export function SearchTabsBar({
           <button
             type="button"
             aria-label="Toggle detail panel"
-            className="flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary"
+            aria-pressed={detailPanelActive}
+            onClick={onToggleDetailPanel}
+            className={`flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary ${
+              detailPanelActive ? 'bg-bg-primary shadow-sm' : ''
+            }`}
           >
             <PanelRight size={16} />
           </button>

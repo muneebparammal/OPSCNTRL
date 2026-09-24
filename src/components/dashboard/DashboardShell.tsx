@@ -1,28 +1,33 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { MapCanvas } from '../layout/MapCanvas'
 import { NavBar } from '../layout/NavBar'
 import { QuickLinksBar } from '../layout/QuickLinksBar'
 import { SearchTabsBar } from '../layout/SearchTabsBar'
 import { Sidebar } from '../layout/Sidebar'
 import { ZoomControls } from '../layout/ZoomControls'
+import { Sheet } from '../ui/Sheet'
 
 type DashboardShellProps = {
   breadcrumb?: string
-  narrowSearch?: boolean
-  sheetOpen?: boolean
   mapTypeDefaultOpen?: boolean
   topExtra?: ReactNode
-  children?: ReactNode
+  sheetTitle?: ReactNode | ((onClose: () => void) => ReactNode)
+  sheetContent?: ReactNode
+  hideSheetClose?: boolean
+  defaultSheetOpen?: boolean
 }
 
 export function DashboardShell({
   breadcrumb = 'Operations Timeline',
-  narrowSearch = false,
-  sheetOpen = false,
   mapTypeDefaultOpen = false,
   topExtra,
-  children,
+  sheetTitle,
+  sheetContent,
+  hideSheetClose = false,
+  defaultSheetOpen = false,
 }: DashboardShellProps) {
+  const [sheetOpen, setSheetOpen] = useState(defaultSheetOpen)
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
       <Sidebar />
@@ -32,7 +37,12 @@ export function DashboardShell({
           <MapCanvas />
 
           <div className="absolute top-6 left-0 flex w-full items-start justify-between px-0">
-            <SearchTabsBar narrow={narrowSearch} mapTypeDefaultOpen={mapTypeDefaultOpen} />
+            <SearchTabsBar
+              narrow={sheetOpen}
+              mapTypeDefaultOpen={mapTypeDefaultOpen}
+              detailPanelActive={sheetOpen}
+              onToggleDetailPanel={() => setSheetOpen((v) => !v)}
+            />
           </div>
 
           {topExtra}
@@ -47,7 +57,20 @@ export function DashboardShell({
             } -translate-x-1/2`}
           />
 
-          {children}
+          {sheetContent && (
+            <Sheet
+              open={sheetOpen}
+              onClose={() => setSheetOpen(false)}
+              title={
+                typeof sheetTitle === 'function'
+                  ? sheetTitle(() => setSheetOpen(false))
+                  : sheetTitle
+              }
+              hideDefaultClose={hideSheetClose}
+            >
+              {sheetContent}
+            </Sheet>
+          )}
         </div>
       </div>
     </div>

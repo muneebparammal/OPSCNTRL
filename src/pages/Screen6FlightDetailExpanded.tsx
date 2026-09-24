@@ -5,18 +5,21 @@ import { FlightTimesCard } from '../components/dashboard/FlightTimesCard'
 import { CrewComplementCard } from '../components/dashboard/HubCrewCards'
 import { FlightInfoCard } from '../components/dashboard/InfoCards'
 import { PassengersCard } from '../components/dashboard/PassengersCard'
-import { Sheet } from '../components/ui/Sheet'
 
 export default function Screen6FlightDetailExpanded() {
   return (
-    <DashboardShell narrowSearch sheetOpen>
-      <Sheet open title={<FlightDetailHeader />} hideDefaultClose>
-        <FlightInfoCard defaultOpen />
-        <FlightTimesCard defaultOpen />
-        <PassengersCard defaultOpen />
-        <ConnectingPassengersCard defaultOpen />
-        <CrewComplementCard />
-      </Sheet>
-    </DashboardShell>
+    <DashboardShell
+      sheetTitle={(onClose) => <FlightDetailHeader onClose={onClose} />}
+      hideSheetClose
+      sheetContent={
+        <>
+          <FlightInfoCard defaultOpen />
+          <FlightTimesCard defaultOpen />
+          <PassengersCard defaultOpen />
+          <ConnectingPassengersCard defaultOpen />
+          <CrewComplementCard />
+        </>
+      }
+    />
   )
 }
