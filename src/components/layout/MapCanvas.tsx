@@ -3,6 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { Plane } from 'lucide-react'
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react'
 import Map, { Marker, type MapRef } from 'react-map-gl/maplibre'
+import { useLiveFleet } from '../../hooks/useLiveFleet'
 
 export type MapStyleId = 'light' | 'dark' | 'satellite'
 
@@ -32,7 +33,7 @@ const mapStyles: Record<MapStyleId, string | ReturnType<typeof rasterStyle>> = {
   ),
 }
 
-type Aircraft = {
+type SimAircraft = {
   lng: number
   lat: number
   heading: number
@@ -40,9 +41,9 @@ type Aircraft = {
   size: number
 }
 
-// Illustrative live-traffic overlay: real flight positions would come from a
-// flight-data feed (e.g. ADS-B) rather than being placed at design time.
-function useFleet(count: number): Aircraft[] {
+// Fallback traffic shown while the live feed is connecting or unreachable,
+// so the map never looks empty/broken.
+function useSimulatedFleet(count: number): SimAircraft[] {
   return useMemo(() => {
     const colors = ['#38bdf8', '#fbbf24', '#e5e7eb']
     let seed = 42
@@ -60,6 +61,13 @@ function useFleet(count: number): Aircraft[] {
   }, [count])
 }
 
+function aircraftColor(onGround: boolean, verticalRate: number | null) {
+  if (onGround) return '#9ca3af'
+  if (verticalRate != null && verticalRate > 1) return '#38bdf8'
+  if (verticalRate != null && verticalRate < -1) return '#fbbf24'
+  return '#e5e7eb'
+}
+
 export type MapCanvasHandle = {
   zoomIn: () => void
   zoomOut: () => void
@@ -75,7 +83,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   { mapType = 'light', onZoomChange },
   ref,
 ) {
-  const fleet = useFleet(70)
+  const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
+  const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
 
   useImperativeHandle(ref, () => ({
@@ -83,6 +92,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     zoomOut: () => mapRef.current?.zoomOut(),
     resetZoom: () => mapRef.current?.flyTo({ zoom: INITIAL_ZOOM }),
   }))
+
+  const showLive = status === 'live' && liveFleet.length > 0
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-bg-secondary">
@@ -96,16 +107,53 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))
         }
       >
-        {fleet.map((a, i) => (
-          <Marker key={i} longitude={a.lng} latitude={a.lat}>
-            <Plane
-              size={a.size}
-              style={{ transform: `rotate(${a.heading}deg)`, color: a.color }}
-              strokeWidth={2.5}
-            />
-          </Marker>
-        ))}
+        {showLive
+          ? liveFleet.map((a) => (
+              <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
+                <div title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}>
+                  <Plane
+                    size={16}
+                    style={{
+                      transform: `rotate(${a.heading}deg)`,
+                      color: aircraftColor(a.onGround, a.verticalRate),
+                    }}
+                    strokeWidth={2.5}
+                  />
+                </div>
+              </Marker>
+            ))
+          : simulatedFleet.map((a, i) => (
+              <Marker key={i} longitude={a.lng} latitude={a.lat}>
+                <Plane
+                  size={a.size}
+                  style={{ transform: `rotate(${a.heading}deg)`, color: a.color }}
+                  strokeWidth={2.5}
+                />
+              </Marker>
+            ))}
       </Map>
+
+      <div className="absolute bottom-6 left-6 z-10 flex items-center gap-1.5 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
+        <span
+          className={`size-1.5 rounded-full ${
+            showLive
+              ? 'bg-fg-green'
+              : status === 'connecting'
+                ? 'animate-pulse bg-fg-muted'
+                : 'bg-fg-red'
+          }`}
+        />
+        {showLive
+          ? `Live · ${liveFleet.length} aircraft`
+          : status === 'connecting'
+            ? 'Connecting to live feed…'
+            : 'Live feed unavailable · showing simulated traffic'}
+        {showLive && lastUpdated && (
+          <span className="text-fg-muted">
+            · {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
+      </div>
     </div>
   )
 })
