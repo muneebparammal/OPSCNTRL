@@ -1,9 +1,17 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 
+import { config as maplibreConfig } from 'maplibre-gl'
+// Vite's production bundler doesn't resolve MapLibre's default worker URL
+// correctly once everything is bundled together (works in dev, 404s in
+// prod). Importing the worker file explicitly with `?worker&url` makes Vite
+// emit it as its own real asset with a correct, base-path-aware URL.
+import MaplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Plane } from 'lucide-react'
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react'
 import Map, { Marker, type MapRef } from 'react-map-gl/maplibre'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
+
+maplibreConfig.WORKER_URL = MaplibreWorker
 
 export type MapStyleId = 'light' | 'dark' | 'satellite'
 
