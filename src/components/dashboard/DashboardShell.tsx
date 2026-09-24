@@ -1,4 +1,5 @@
 import { type ReactNode, useRef, useState } from 'react'
+import { MapSelectionProvider } from '../../context/MapSelectionContext'
 import { MapCanvas, type MapCanvasHandle, type MapStyleId } from '../layout/MapCanvas'
 import { NavBar } from '../layout/NavBar'
 import { QuickLinksBar } from '../layout/QuickLinksBar'
@@ -33,64 +34,66 @@ export function DashboardShell({
   const mapRef = useRef<MapCanvasHandle>(null)
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
-      <Sidebar expanded={sidebarExpanded} />
-      <div className="flex h-full flex-1 flex-col">
-        <NavBar
-          breadcrumb={breadcrumb}
-          sidebarExpanded={sidebarExpanded}
-          onToggleSidebar={() => setSidebarExpanded((v) => !v)}
-        />
-        <div className="relative flex-1 overflow-hidden">
-          <MapCanvas ref={mapRef} mapType={mapType} onZoomChange={setZoomPercent} />
-
-          <div
-            className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
-              sheetOpen ? 'right-[440px]' : 'right-0'
-            }`}
-          >
-            <SearchTabsBar
-              narrow={sheetOpen}
-              mapTypeDefaultOpen={mapTypeDefaultOpen}
-              detailPanelActive={sheetOpen}
-              onToggleDetailPanel={() => setSheetOpen((v) => !v)}
-              mapType={mapType}
-              onMapTypeChange={setMapType}
-            />
-          </div>
-
-          {topExtra}
-
-          <ZoomControls
-            className={`absolute bottom-6 ${sheetOpen ? 'right-[464px]' : 'right-6'}`}
-            percent={zoomPercent}
-            onZoomIn={() => mapRef.current?.zoomIn()}
-            onZoomOut={() => mapRef.current?.zoomOut()}
-            onReset={() => mapRef.current?.resetZoom()}
+    <MapSelectionProvider>
+      <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
+        <Sidebar expanded={sidebarExpanded} />
+        <div className="flex h-full flex-1 flex-col">
+          <NavBar
+            breadcrumb={breadcrumb}
+            sidebarExpanded={sidebarExpanded}
+            onToggleSidebar={() => setSidebarExpanded((v) => !v)}
           />
+          <div className="relative flex-1 overflow-hidden">
+            <MapCanvas ref={mapRef} mapType={mapType} onZoomChange={setZoomPercent} />
 
-          <QuickLinksBar
-            className={`absolute bottom-6 ${
-              sheetOpen ? 'left-[calc(50%-220px)]' : 'left-1/2'
-            } -translate-x-1/2`}
-          />
-
-          {sheetContent && (
-            <Sheet
-              open={sheetOpen}
-              onClose={() => setSheetOpen(false)}
-              title={
-                typeof sheetTitle === 'function'
-                  ? sheetTitle(() => setSheetOpen(false))
-                  : sheetTitle
-              }
-              hideDefaultClose={hideSheetClose}
+            <div
+              className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
+                sheetOpen ? 'right-[440px]' : 'right-0'
+              }`}
             >
-              {sheetContent}
-            </Sheet>
-          )}
+              <SearchTabsBar
+                narrow={sheetOpen}
+                mapTypeDefaultOpen={mapTypeDefaultOpen}
+                detailPanelActive={sheetOpen}
+                onToggleDetailPanel={() => setSheetOpen((v) => !v)}
+                mapType={mapType}
+                onMapTypeChange={setMapType}
+              />
+            </div>
+
+            {topExtra}
+
+            <ZoomControls
+              className={`absolute bottom-6 ${sheetOpen ? 'right-[464px]' : 'right-6'}`}
+              percent={zoomPercent}
+              onZoomIn={() => mapRef.current?.zoomIn()}
+              onZoomOut={() => mapRef.current?.zoomOut()}
+              onReset={() => mapRef.current?.resetZoom()}
+            />
+
+            <QuickLinksBar
+              className={`absolute bottom-6 ${
+                sheetOpen ? 'left-[calc(50%-220px)]' : 'left-1/2'
+              } -translate-x-1/2`}
+            />
+
+            {sheetContent && (
+              <Sheet
+                open={sheetOpen}
+                onClose={() => setSheetOpen(false)}
+                title={
+                  typeof sheetTitle === 'function'
+                    ? sheetTitle(() => setSheetOpen(false))
+                    : sheetTitle
+                }
+                hideDefaultClose={hideSheetClose}
+              >
+                {sheetContent}
+              </Sheet>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </MapSelectionProvider>
   )
 }

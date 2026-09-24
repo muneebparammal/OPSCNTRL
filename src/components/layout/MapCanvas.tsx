@@ -6,14 +6,16 @@ import { config as maplibreConfig } from 'maplibre-gl'
 // prod). Importing the worker file explicitly with `?worker&url` makes Vite
 // emit it as its own real asset with a correct, base-path-aware URL.
 import MaplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react'
-import Map, { Marker, type MapRef } from 'react-map-gl/maplibre'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
+import Map, { Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre'
 import planeBlueSolid from '../../assets/icons/plane-blue-solid.png'
 import planeBlueOutline from '../../assets/icons/plane-blue-outline.png'
 import planeYellowSolid from '../../assets/icons/plane-yellow-solid.png'
 import planeYellowBold from '../../assets/icons/plane-yellow-bold.png'
 import planeLightBluePattern from '../../assets/icons/plane-lightblue-pattern.png'
 import planeLightBlueOutline from '../../assets/icons/plane-lightblue-outline.png'
+import { useMapSelection } from '../../context/MapSelectionContext'
+import { firRegions } from '../../data/firRegions'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
@@ -103,6 +105,24 @@ function useSimulatedFleet(count: number): SimAircraft[] {
   }, [count])
 }
 
+// Approximates a circle as a GeoJSON polygon (no official FIR boundary data
+// used here — this is an illustrative highlight, not a real airspace shape).
+function circlePolygon(lng: number, lat: number, radiusKm: number, points = 64) {
+  const coords: [number, number][] = []
+  const latRad = (lat * Math.PI) / 180
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * 2 * Math.PI
+    const offsetLat = (radiusKm / 111.32) * Math.sin(angle)
+    const offsetLng = (radiusKm / (111.32 * Math.cos(latRad))) * Math.cos(angle)
+    coords.push([lng + offsetLng, lat + offsetLat])
+  }
+  return {
+    type: 'Feature' as const,
+    geometry: { type: 'Polygon' as const, coordinates: [coords] },
+    properties: {},
+  }
+}
+
 function aircraftIcon(onGround: boolean, verticalRate: number | null) {
   if (onGround) return planeLightBlueOutline
   if (verticalRate != null && verticalRate > 1) return planeBlueSolid
@@ -128,6 +148,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
   const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
+  const { selectedFirId } = useMapSelection()
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => mapRef.current?.zoomIn(),
@@ -136,6 +157,18 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   }))
 
   const showLive = status === 'live' && liveFleet.length > 0
+
+  const selectedFir = firRegions.find((r) => r.id === selectedFirId)
+
+  useEffect(() => {
+    if (selectedFir) {
+      mapRef.current?.flyTo({
+        center: [selectedFir.lng, selectedFir.lat],
+        zoom: 6,
+        duration: 1000,
+      })
+    }
+  }, [selectedFir])
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-bg-secondary">
@@ -149,6 +182,25 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))
         }
       >
+        {selectedFir && (
+          <Source
+            id="fir-highlight"
+            type="geojson"
+            data={circlePolygon(selectedFir.lng, selectedFir.lat, 180)}
+          >
+            <Layer
+              id="fir-highlight-fill"
+              type="fill"
+              paint={{ 'fill-color': '#1c80cf', 'fill-opacity': 0.12 }}
+            />
+            <Layer
+              id="fir-highlight-line"
+              type="line"
+              paint={{ 'line-color': '#1c80cf', 'line-width': 2, 'line-dasharray': [2, 2] }}
+            />
+          </Source>
+        )}
+
         {showLive
           ? liveFleet.map((a) => (
               <Marker key={a.id} longitude={a.lng} latitude={a.lat}>

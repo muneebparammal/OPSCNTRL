@@ -1,19 +1,13 @@
 import { Radar, Search } from 'lucide-react'
 import { useState } from 'react'
+import { useMapSelection } from '../../context/MapSelectionContext'
+import { firRegions } from '../../data/firRegions'
 import { CollapsibleCard } from '../ui/Card'
 import { Switch } from '../ui/Switch'
 
-const firRegions = [
-  { name: 'OMAE FIR', count: 42 },
-  { name: 'OEJD FIR', count: 31 },
-  { name: 'OOMM FIR', count: 18 },
-  { name: 'OIIX FIR', count: 27 },
-  { name: 'OPKC FIR', count: 15 },
-  { name: 'VABF FIR', count: 22 },
-]
-
 export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const [overlay, setOverlay] = useState(true)
+  const { selectedFirId, setSelectedFirId } = useMapSelection()
 
   return (
     <CollapsibleCard icon={Radar} title="Air Space" defaultOpen={defaultOpen}>
@@ -39,15 +33,26 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
         </div>
       </div>
       <div className="flex max-h-[328px] w-full flex-col gap-2 overflow-y-auto">
-        {firRegions.map((r) => (
-          <div
-            key={r.name}
-            className="flex h-12 w-full shrink-0 items-center justify-between rounded-2xl bg-bg-muted px-4"
-          >
-            <p className="text-sm font-semibold text-fg-secondary">{r.name}</p>
-            <p className="text-sm text-fg-muted">{r.count} flights</p>
-          </div>
-        ))}
+        {firRegions.map((r) => {
+          const active = selectedFirId === r.id
+          return (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setSelectedFirId(active ? null : r.id)}
+              className={`flex h-12 w-full shrink-0 items-center justify-between rounded-2xl px-4 text-left transition-colors ${
+                active
+                  ? 'bg-fg-secondary text-white'
+                  : 'bg-bg-muted text-fg-secondary hover:bg-bg-tertiary'
+              }`}
+            >
+              <p className="text-sm font-semibold">{r.name}</p>
+              <p className={`text-sm ${active ? 'text-white/80' : 'text-fg-muted'}`}>
+                {r.count} flights
+              </p>
+            </button>
+          )
+        })}
       </div>
     </CollapsibleCard>
   )
