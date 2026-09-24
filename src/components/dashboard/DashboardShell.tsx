@@ -27,12 +27,17 @@ export function DashboardShell({
   defaultSheetOpen = false,
 }: DashboardShellProps) {
   const [sheetOpen, setSheetOpen] = useState(defaultSheetOpen)
+  const [sidebarExpanded, setSidebarExpanded] = useState(false)
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
-      <Sidebar />
+      <Sidebar expanded={sidebarExpanded} />
       <div className="flex h-full flex-1 flex-col">
-        <NavBar breadcrumb={breadcrumb} />
+        <NavBar
+          breadcrumb={breadcrumb}
+          sidebarExpanded={sidebarExpanded}
+          onToggleSidebar={() => setSidebarExpanded((v) => !v)}
+        />
         <div className="relative flex-1 overflow-hidden">
           <MapCanvas />
 

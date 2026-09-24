@@ -1,13 +1,23 @@
 import { Bell, Moon, PanelLeft, RefreshCw } from 'lucide-react'
 
-export function NavBar({ breadcrumb }: { breadcrumb: string }) {
+type NavBarProps = {
+  breadcrumb: string
+  sidebarExpanded?: boolean
+  onToggleSidebar?: () => void
+}
+
+export function NavBar({ breadcrumb, sidebarExpanded = false, onToggleSidebar }: NavBarProps) {
   return (
     <header className="flex h-[70px] w-full shrink-0 items-center justify-between border-b border-border-primary bg-bg-primary px-6">
       <div className="flex items-center gap-2">
         <button
           type="button"
           aria-label="Toggle sidebar"
-          className="flex size-7 items-center justify-center rounded-full text-fg-secondary"
+          aria-pressed={sidebarExpanded}
+          onClick={onToggleSidebar}
+          className={`flex size-7 items-center justify-center rounded-full text-fg-secondary ${
+            sidebarExpanded ? 'bg-bg-secondary' : ''
+          }`}
         >
           <PanelLeft size={16} />
         </button>
