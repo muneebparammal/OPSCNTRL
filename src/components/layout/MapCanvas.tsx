@@ -6,9 +6,14 @@ import { config as maplibreConfig } from 'maplibre-gl'
 // prod). Importing the worker file explicitly with `?worker&url` makes Vite
 // emit it as its own real asset with a correct, base-path-aware URL.
 import MaplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { Plane } from 'lucide-react'
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react'
 import Map, { Marker, type MapRef } from 'react-map-gl/maplibre'
+import planeBlueSolid from '../../assets/icons/plane-blue-solid.png'
+import planeBlueOutline from '../../assets/icons/plane-blue-outline.png'
+import planeYellowSolid from '../../assets/icons/plane-yellow-solid.png'
+import planeYellowBold from '../../assets/icons/plane-yellow-bold.png'
+import planeLightBluePattern from '../../assets/icons/plane-lightblue-pattern.png'
+import planeLightBlueOutline from '../../assets/icons/plane-lightblue-outline.png'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
@@ -41,11 +46,41 @@ const mapStyles: Record<MapStyleId, string | ReturnType<typeof rasterStyle>> = {
   ),
 }
 
+const allPlaneIcons = [
+  planeBlueSolid,
+  planeBlueOutline,
+  planeYellowSolid,
+  planeYellowBold,
+  planeLightBluePattern,
+  planeLightBlueOutline,
+]
+
+function PlaneMarker({
+  icon,
+  heading,
+  size = 20,
+}: {
+  icon: string
+  heading: number
+  size?: number
+}) {
+  return (
+    <img
+      src={icon}
+      alt=""
+      width={size}
+      height={size}
+      style={{ transform: `rotate(${heading}deg)`, display: 'block' }}
+      draggable={false}
+    />
+  )
+}
+
 type SimAircraft = {
   lng: number
   lat: number
   heading: number
-  color: string
+  icon: string
   size: number
 }
 
@@ -53,7 +88,6 @@ type SimAircraft = {
 // so the map never looks empty/broken.
 function useSimulatedFleet(count: number): SimAircraft[] {
   return useMemo(() => {
-    const colors = ['#38bdf8', '#fbbf24', '#e5e7eb']
     let seed = 42
     const rand = () => {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff
@@ -63,17 +97,17 @@ function useSimulatedFleet(count: number): SimAircraft[] {
       lng: 20 + rand() * 55,
       lat: 5 + rand() * 33,
       heading: rand() * 360,
-      color: colors[Math.floor(rand() * colors.length)],
-      size: 14 + rand() * 8,
+      icon: allPlaneIcons[Math.floor(rand() * allPlaneIcons.length)],
+      size: 18 + rand() * 8,
     }))
   }, [count])
 }
 
-function aircraftColor(onGround: boolean, verticalRate: number | null) {
-  if (onGround) return '#9ca3af'
-  if (verticalRate != null && verticalRate > 1) return '#38bdf8'
-  if (verticalRate != null && verticalRate < -1) return '#fbbf24'
-  return '#e5e7eb'
+function aircraftIcon(onGround: boolean, verticalRate: number | null) {
+  if (onGround) return planeLightBlueOutline
+  if (verticalRate != null && verticalRate > 1) return planeBlueSolid
+  if (verticalRate != null && verticalRate < -1) return planeYellowSolid
+  return planeLightBluePattern
 }
 
 export type MapCanvasHandle = {
@@ -119,24 +153,13 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           ? liveFleet.map((a) => (
               <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
                 <div title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}>
-                  <Plane
-                    size={16}
-                    style={{
-                      transform: `rotate(${a.heading}deg)`,
-                      color: aircraftColor(a.onGround, a.verticalRate),
-                    }}
-                    strokeWidth={2.5}
-                  />
+                  <PlaneMarker icon={aircraftIcon(a.onGround, a.verticalRate)} heading={a.heading} />
                 </div>
               </Marker>
             ))
           : simulatedFleet.map((a, i) => (
               <Marker key={i} longitude={a.lng} latitude={a.lat}>
-                <Plane
-                  size={a.size}
-                  style={{ transform: `rotate(${a.heading}deg)`, color: a.color }}
-                  strokeWidth={2.5}
-                />
+                <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
               </Marker>
             ))}
       </Map>
