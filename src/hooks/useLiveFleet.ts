@@ -22,6 +22,13 @@ const BBOX = { lamin: 5, lomin: 20, lamax: 38, lomax: 75 }
 const POLL_INTERVAL_MS = 20_000
 const MAX_MARKERS = 150
 
+// In dev, Vite's server proxy at /opensky-api handles CORS (see
+// vite.config.ts). In production (a static host with no server of its own,
+// e.g. GitHub Pages) that proxy doesn't exist, so VITE_OPENSKY_PROXY_URL
+// must point at an external proxy — see cloudflare-worker/. Left unset, the
+// live feed will fail to fetch and the map falls back to simulated traffic.
+const PROXY_BASE = import.meta.env.VITE_OPENSKY_PROXY_URL || '/opensky-api'
+
 type OpenSkyResponse = {
   states: (string | number | boolean | null)[][] | null
 }
@@ -56,10 +63,7 @@ export function useLiveFleet() {
     async function poll() {
       try {
         const { lamin, lomin, lamax, lomax } = BBOX
-        // Relative path, proxied by the dev server (see vite.config.ts) —
-        // OpenSky doesn't send CORS headers, so the browser can't call it
-        // directly.
-        const url = `/opensky-api/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
+        const url = `${PROXY_BASE}/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`OpenSky responded ${res.status}`)
         const data: OpenSkyResponse = await res.json()

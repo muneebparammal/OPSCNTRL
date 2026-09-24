@@ -4,6 +4,9 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Relative base so the build works from a GitHub Pages project subpath
+  // (https://<user>.github.io/<repo>/) without hardcoding the repo name.
+  base: './',
   plugins: [react(), tailwindcss()],
   worker: { format: 'es' },
   optimizeDeps: { exclude: ['maplibre-gl'] },
