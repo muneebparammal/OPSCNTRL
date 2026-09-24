@@ -36,7 +36,11 @@ export function DashboardShell({
         <div className="relative flex-1 overflow-hidden">
           <MapCanvas />
 
-          <div className="absolute top-6 left-0 flex w-full items-start justify-between px-0">
+          <div
+            className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
+              sheetOpen ? 'right-[440px]' : 'right-0'
+            }`}
+          >
             <SearchTabsBar
               narrow={sheetOpen}
               mapTypeDefaultOpen={mapTypeDefaultOpen}
