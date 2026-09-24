@@ -1,1 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 @import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Urbanist', system-ui, sans-serif;
+
+  --color-brand-ek: #d71921;
+
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #e5e5e5;
+  --color-bg-muted: #fafafa;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #fafafa;
+  --color-bg-sidebar-secondary: #e5e5e5;
+  --color-bg-popover: #ffffff;
+  --color-bg-inverse-secondary: #262626;
+
+  --color-bg-green-muted: #f6fbf6;
+  --color-bg-green-subtle: #d4ecd5;
+  --color-bg-red-subtle: #f4cdcd;
+  --color-bg-grey-blue-subtle: #d9e0e3;
+  --color-bg-orange-inverse: #fff8f2;
+
+  --color-fg-primary: #0a0a0a;
+  --color-fg-secondary: #171717;
+  --color-fg-tertiary: #262626;
+  --color-fg-muted: #737373;
+  --color-fg-inverse-primary: #fafafa;
+
+  --color-fg-green: #419544;
+  --color-fg-blue: #1c80cf;
+  --color-fg-red: #b32828;
+  --color-fg-grey-blue: #526a76;
+  --color-fg-grey-blue-chart: #607d8b;
+  --color-fg-red-chart: #d32f2f;
+  --color-fg-green-chart: #4caf50;
+
+  --color-border-primary: #e5e5e5;
+  --color-border-input: #e5e5e5;
+
+  --shadow-xs: 0 1px 2px 0 rgba(10, 10, 10, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(10, 10, 10, 0.1);
+  --shadow-popover: 0 4px 8px 0 rgba(10, 10, 10, 0.1);
+  --shadow-modal: 0 5px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-fg-secondary);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
