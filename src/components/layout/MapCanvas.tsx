@@ -131,7 +131,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
   const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
-  const { selectedFirId } = useMapSelection()
+  const { selectedFirId, showAllFirLayers } = useMapSelection()
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => mapRef.current?.zoomIn(),
@@ -168,22 +168,33 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))
         }
       >
-        {selectedFirId && (
+        {(showAllFirLayers || selectedFirId) && (
           <Source id="fir-boundaries" type="geojson" data={firBoundaries}>
-            {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
-                MapLibre paint values can't reference CSS custom properties directly. */}
-            <Layer
-              id="fir-highlight-fill"
-              type="fill"
-              filter={['==', ['get', 'id'], selectedFirId]}
-              paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
-            />
-            <Layer
-              id="fir-highlight-line"
-              type="line"
-              filter={['==', ['get', 'id'], selectedFirId]}
-              paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
-            />
+            {showAllFirLayers && (
+              <Layer
+                id="fir-outline-all"
+                type="line"
+                paint={{ 'line-color': '#94a3b8', 'line-width': 1, 'line-opacity': 0.6 }}
+              />
+            )}
+            {selectedFirId && (
+              <>
+                {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
+                    MapLibre paint values can't reference CSS custom properties directly. */}
+                <Layer
+                  id="fir-highlight-fill"
+                  type="fill"
+                  filter={['==', ['get', 'id'], selectedFirId]}
+                  paint={{ 'fill-color': '#d6ebfa', 'fill-opacity': 0.65 }}
+                />
+                <Layer
+                  id="fir-highlight-line"
+                  type="line"
+                  filter={['==', ['get', 'id'], selectedFirId]}
+                  paint={{ 'line-color': '#1c80cf', 'line-width': 2.5 }}
+                />
+              </>
+            )}
           </Source>
         )}
 

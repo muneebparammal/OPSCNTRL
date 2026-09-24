@@ -6,8 +6,13 @@ import { CollapsibleCard } from '../ui/Card'
 import { Switch } from '../ui/Switch'
 
 export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean }) {
-  const [overlay, setOverlay] = useState(true)
-  const { selectedFirId, setSelectedFirId } = useMapSelection()
+  const [query, setQuery] = useState('')
+  const { selectedFirId, setSelectedFirId, showAllFirLayers, setShowAllFirLayers } =
+    useMapSelection()
+
+  const filtered = firRegions.filter((r) =>
+    r.name.toLowerCase().includes(query.trim().toLowerCase()),
+  )
 
   return (
     <CollapsibleCard icon={Radar} title="Air Space" defaultOpen={defaultOpen}>
@@ -15,25 +20,24 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
         <Search size={16} className="shrink-0 text-fg-muted" />
         <input
           type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search FIR"
           className="w-full bg-transparent text-sm font-medium text-fg-secondary placeholder:text-fg-muted focus:outline-none"
         />
       </div>
       <div className="flex w-full items-center gap-2 py-1">
         <p className="text-sm font-semibold text-fg-secondary">FIR</p>
-        <button
-          type="button"
-          className="rounded-full border border-border-primary px-3 py-1 text-xs font-semibold text-fg-secondary"
-        >
-          All regions
-        </button>
+        <span className="rounded-full border border-border-primary px-3 py-1 text-xs font-semibold text-fg-secondary">
+          {filtered.length} region{filtered.length === 1 ? '' : 's'}
+        </span>
         <div className="ml-auto flex items-center gap-2">
-          <p className="text-xs font-medium text-fg-muted">Overlay</p>
-          <Switch checked={overlay} onChange={setOverlay} label="Overlay" />
+          <p className="text-xs font-medium text-fg-muted">Overlay all</p>
+          <Switch checked={showAllFirLayers} onChange={setShowAllFirLayers} label="Overlay all FIRs" />
         </div>
       </div>
       <div className="flex max-h-[328px] w-full flex-col gap-2 overflow-y-auto">
-        {firRegions.map((r) => {
+        {filtered.map((r) => {
           const active = selectedFirId === r.id
           return (
             <button
@@ -53,6 +57,9 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
             </button>
           )
         })}
+        {filtered.length === 0 && (
+          <p className="py-4 text-center text-sm text-fg-muted">No FIR matches "{query}"</p>
+        )}
       </div>
     </CollapsibleCard>
   )
