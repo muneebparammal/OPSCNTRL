@@ -1,10 +1,9 @@
-import { Fuel, Weight } from 'lucide-react'
+import { Fuel } from 'lucide-react'
 import { useState } from 'react'
 import { getFuelStatus } from '../../data/fuelStatus'
 import { Chip } from '../ui/Badge'
 import { CollapsibleCard, Separator } from '../ui/Card'
-import { icons } from '../ui/Icon'
-import { WeightConcepts } from './WeightConcepts'
+import { TakeoffWeightBar } from './TakeoffWeightBar'
 import { displayCallsign } from '../ui/FlightTooltip'
 
 type Unit = 'KG' | 'LT'
@@ -149,46 +148,6 @@ function StatCard({
   )
 }
 
-type Term = {
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  label: string
-  act: string
-  est: string
-}
-
-function WeightBuildUp({ terms, unit }: { terms: [Term, Term, Term]; unit: string }) {
-  const [zfw, fuel, tow] = terms
-  const col = (t: Term, strong = false) => (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 text-center">
-      <t.icon size={16} className="text-fg-muted" />
-      <p className="text-[11px] font-semibold whitespace-nowrap text-fg-muted">{t.label}</p>
-      <p
-        className={`text-base leading-5 font-bold ${strong ? 'text-fg-primary' : 'text-fg-secondary'}`}
-      >
-        {t.act}
-      </p>
-      <p className="text-[11px] text-fg-muted">est {t.est}</p>
-    </div>
-  )
-  return (
-    <div className="flex w-full flex-col gap-2 border-t border-border-primary pt-3">
-      <div className="flex items-center justify-between px-1">
-        <p className="text-xs font-extrabold tracking-wide text-fg-muted uppercase">
-          Weight build-up
-        </p>
-        <p className="text-[11px] font-semibold text-fg-muted">{unit}</p>
-      </div>
-      <div className="flex w-full items-start">
-        {col(zfw)}
-        <span className="mt-6 w-3 text-center text-sm font-bold text-fg-muted">+</span>
-        {col(fuel)}
-        <span className="mt-6 w-3 text-center text-sm font-bold text-fg-muted">=</span>
-        {col(tow, true)}
-      </div>
-    </div>
-  )
-}
-
 export function FuelStatusCard({
   callsign,
   defaultOpen = false,
@@ -260,24 +219,7 @@ export function FuelStatusCard({
         <StatCard label="Planned burn" value={num(f.plannedBurn)} unit={unit} />
       </div>
 
-      <WeightBuildUp
-        unit={unit}
-        terms={[
-          { icon: Weight, label: 'Zero-fuel', act: num(f.zfwActual), est: num(f.zfwEstimate) },
-          { icon: Fuel, label: 'Fuel', act: num(f.fuelDepartActual), est: num(f.plannedFuel) },
-          {
-            icon: icons.takeoff,
-            label: 'Take-off',
-            act: num(f.towActual),
-            est: num(f.towEstimate),
-          },
-        ]}
-      />
-      <WeightConcepts
-        zfwAct={f.zfwActual}
-        zfwEst={f.zfwEstimate}
-        fuelAct={f.fuelDepartActual}
-        fuelEst={f.plannedFuel}
+      <TakeoffWeightBar
         towAct={f.towActual}
         towEst={f.towEstimate}
         mtow={575000}
