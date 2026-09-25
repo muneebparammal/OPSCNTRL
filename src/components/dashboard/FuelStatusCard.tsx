@@ -1,8 +1,8 @@
-import { Flame, Fuel, ClipboardList } from 'lucide-react'
+import { Fuel, Scale } from 'lucide-react'
 import { useState } from 'react'
 import { getFuelStatus } from '../../data/fuelStatus'
 import { Chip } from '../ui/Badge'
-import { CollapsibleCard, FieldPair, Separator } from '../ui/Card'
+import { CollapsibleCard, Separator } from '../ui/Card'
 import { icons } from '../ui/Icon'
 import { displayCallsign } from '../ui/FlightTooltip'
 
@@ -126,33 +126,53 @@ function Delta({ actual, planned }: { actual: number; planned: number }) {
 }
 
 function StatCard({
-  icon: Icon,
   label,
   value,
   unit,
-  tint,
   badge,
 }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
   value: string
   unit: string
-  tint: string
   badge?: React.ReactNode
 }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-xl border border-border-primary bg-bg-muted p-3">
-      <div className="flex items-center justify-between">
-        <span className={`flex size-7 items-center justify-center rounded-lg ${tint}`}>
-          <Icon size={14} />
-        </span>
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-xl border border-border-primary bg-bg-muted p-3">
+      <p className="text-xs font-semibold whitespace-nowrap text-fg-tertiary">{label}</p>
+      <p className="text-lg leading-6 font-bold text-fg-primary">{value}</p>
+      <div className="flex min-h-5 items-center justify-between gap-1">
+        <p className="text-[11px] font-semibold text-fg-muted">{unit}</p>
         {badge}
       </div>
-      <div className="flex flex-col">
-        <p className="text-lg leading-6 font-bold text-fg-primary">{value}</p>
-        <p className="text-[11px] font-semibold text-fg-muted">{unit}</p>
+    </div>
+  )
+}
+
+function WeightRow({
+  icon: Icon,
+  label,
+  est,
+  act,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>
+  label: string
+  est: string
+  act: string
+}) {
+  return (
+    <div className="flex w-full items-center gap-3 rounded-xl border border-border-primary bg-bg-muted px-3 py-2.5">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-bg-secondary text-fg-secondary">
+        <Icon size={16} />
+      </span>
+      <p className="flex-1 text-sm font-semibold text-fg-primary">{label}</p>
+      <div className="flex flex-col items-end">
+        <p className="text-[11px] font-extrabold text-fg-muted">EST</p>
+        <p className="text-sm font-semibold text-fg-tertiary">{est}</p>
       </div>
-      <p className="text-xs font-semibold text-fg-tertiary">{label}</p>
+      <div className="flex flex-col items-end">
+        <p className="text-[11px] font-extrabold text-fg-muted">ACT</p>
+        <p className="text-sm font-bold text-fg-primary">{act}</p>
+      </div>
     </div>
   )
 }
@@ -218,42 +238,30 @@ export function FuelStatusCard({
       )}
 
       <div className="flex w-full gap-2">
+        <StatCard label="Planned fuel" value={num(f.plannedFuel)} unit={unit} />
         <StatCard
-          icon={ClipboardList}
-          label="Planned fuel"
-          value={num(f.plannedFuel)}
-          unit={unit}
-          tint="bg-bg-blue-subtle text-fg-blue"
-        />
-        <StatCard
-          icon={icons.takeoff}
           label="Departed with"
           value={num(f.fuelDepartActual)}
           unit={unit}
-          tint="bg-bg-green-subtle text-fg-green"
           badge={<Delta actual={f.fuelDepartActual} planned={f.plannedFuel} />}
         />
-        <StatCard
-          icon={Flame}
-          label="Planned burn"
-          value={num(f.plannedBurn)}
-          unit={unit}
-          tint="bg-bg-orange-inverse text-[#f08c00]"
-        />
+        <StatCard label="Planned burn" value={num(f.plannedBurn)} unit={unit} />
       </div>
 
-      <FieldPair
-        items={[
-          ['TAKE-OFF WT · EST', fmt(f.towEstimate)],
-          ['TAKE-OFF WT · ACT', fmt(f.towActual)],
-        ]}
-      />
-      <FieldPair
-        items={[
-          ['ZERO-FUEL WT · EST', fmt(f.zfwEstimate)],
-          ['ZERO-FUEL WT · ACT', fmt(f.zfwActual)],
-        ]}
-      />
+      <div className="flex w-full flex-col gap-2">
+        <WeightRow
+          icon={icons.takeoff}
+          label="Take-off weight"
+          est={fmt(f.towEstimate)}
+          act={fmt(f.towActual)}
+        />
+        <WeightRow
+          icon={Scale}
+          label="Zero-fuel weight"
+          est={fmt(f.zfwEstimate)}
+          act={fmt(f.zfwActual)}
+        />
+      </div>
       <Separator />
 
       <p className="px-1 text-[11px] text-fg-muted">
