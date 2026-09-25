@@ -117,26 +117,3 @@ export function Delta({ actual, planned }: { actual: number; planned: number }) 
     </Chip>
   )
 }
-
-export function StatCard({
-  label,
-  value,
-  unit,
-  badge,
-}: {
-  label: string
-  value: string
-  unit: string
-  badge?: React.ReactNode
-}) {
-  return (
-    <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-2xl bg-bg-secondary px-3 py-3">
-      <p className="text-xs font-extrabold whitespace-nowrap text-fg-secondary">{label}</p>
-      <div className="flex items-end gap-1 text-fg-secondary">
-        <p className="text-xl leading-6 font-bold">{value}</p>
-        <p className="pb-0.5 text-xs tracking-[0.24px]">{unit}</p>
-      </div>
-      <div className="flex min-h-5 items-center">{badge}</div>
-    </div>
-  )
-}

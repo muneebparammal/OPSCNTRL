@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { getFuelStatus } from '../../data/fuelStatus'
 import { CollapsibleCard, Separator } from '../ui/Card'
 import { displayCallsign } from '../ui/FlightTooltip'
-import { FUEL_OPTIONS } from './FuelOptions'
+import { FuelBody } from './FuelBody'
 
 type Unit = 'KG' | 'LT'
 
@@ -16,15 +16,12 @@ export function FuelStatusCard({
 }) {
   const f = getFuelStatus(displayCallsign(callsign))
   const [unit, setUnit] = useState<Unit>('KG')
-  const [option, setOption] = useState<(typeof FUEL_OPTIONS)[number]['id']>('F')
   const conv = (kg: number) => (unit === 'KG' ? kg : kg / f.density)
   const num = (kg: number) => Math.round(conv(kg)).toLocaleString()
   const fmt = (kg: number) => `${Math.round(conv(kg)).toLocaleString()} ${unit}`
   const pending =
     f.fuelDepartActual + f.fuelArriveActual + f.fuelOnBoard + f.towActual + f.zfwActual === 0
   const remaining = f.fuelDepartActual ? f.fuelOnBoard / f.fuelDepartActual : 0
-  const burned = f.fuelDepartActual ? f.fuelDepartActual - f.fuelOnBoard : 0
-  const Active = FUEL_OPTIONS.find((o) => o.id === option)!.Component
 
   return (
     <CollapsibleCard icon={Fuel} title="Fuel Status" defaultOpen={defaultOpen}>
@@ -51,45 +48,13 @@ export function FuelStatusCard({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-1.5 rounded-xl border border-dashed border-border-primary p-2">
-        <p className="px-1 text-[11px] font-extrabold tracking-wide text-fg-muted uppercase">
-          Design option · pick one to finalize
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {FUEL_OPTIONS.map((o) => (
-            <button
-              key={o.id}
-              type="button"
-              aria-pressed={option === o.id}
-              onClick={() => setOption(o.id)}
-              className={`flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold ${
-                option === o.id
-                  ? 'border-inverse bg-inverse text-white'
-                  : 'border-border-primary text-fg-secondary'
-              }`}
-            >
-              <span className="font-bold">{o.id}</span>
-              {o.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {pending && (
         <p className="px-1 text-xs text-fg-muted">
           No fuel or weight data yet — the flight may not have departed.
         </p>
       )}
 
-      <Active
-        f={f}
-        unit={unit}
-        num={num}
-        fmt={fmt}
-        pending={pending}
-        remaining={remaining}
-        burned={burned}
-      />
+      <FuelBody f={f} unit={unit} num={num} fmt={fmt} pending={pending} remaining={remaining} />
 
       <Separator />
       <p className="px-1 text-[11px] text-fg-muted">
