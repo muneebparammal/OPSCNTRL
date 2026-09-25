@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useMapSelection } from '../../context/MapSelectionContext'
 import type { MapStyleId } from '../layout/MapCanvas'
 import { Switch } from './Switch'
@@ -32,29 +31,28 @@ type MapTypeDropdownProps = {
 }
 
 export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownProps) {
-  const { showAirportsLayer, setShowAirportsLayer, showEmiratesLayer, setShowEmiratesLayer } =
-    useMapSelection()
-  const [overlayState, setOverlayState] = useState<Record<string, boolean>>({
-    'NOTAMs': false,
-    'Airspace': false,
-    'Country Name': true,
-  })
-
-  const isChecked = (label: string) =>
-    label === 'Airport'
-      ? showAirportsLayer
-      : label === 'Emirates Tracker'
-        ? showEmiratesLayer
-        : overlayState[label]
-  const handleChange = (label: string, value: boolean) => {
-    if (label === 'Airport') {
-      setShowAirportsLayer(value)
-    } else if (label === 'Emirates Tracker') {
-      setShowEmiratesLayer(value)
-    } else {
-      setOverlayState((s) => ({ ...s, [label]: value }))
-    }
+  const {
+    showAirportsLayer,
+    setShowAirportsLayer,
+    showEmiratesLayer,
+    setShowEmiratesLayer,
+    showAllFirLayers,
+    setShowAllFirLayers,
+    showCountryNames,
+    setShowCountryNames,
+    showNotams,
+    setShowNotams,
+  } = useMapSelection()
+  const overlayState: Record<string, [boolean, (v: boolean) => void]> = {
+    'NOTAMs': [showNotams, setShowNotams],
+    'Airport': [showAirportsLayer, setShowAirportsLayer],
+    'Emirates Tracker': [showEmiratesLayer, setShowEmiratesLayer],
+    'Airspace': [showAllFirLayers, setShowAllFirLayers],
+    'Country Name': [showCountryNames, setShowCountryNames],
   }
+
+  const isChecked = (label: string) => overlayState[label][0]
+  const handleChange = (label: string, value: boolean) => overlayState[label][1](value)
 
   return (
     <div className="w-56 overflow-hidden rounded-xl border border-border-primary bg-bg-popover py-1 shadow-popover">

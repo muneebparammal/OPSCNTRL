@@ -7,6 +7,35 @@ const emptyHourly = (): HourlyCounts => ({
   arrival: Array(24).fill(0),
 })
 
+export type MapSettings = {
+  altitudeUnit: 'ft' | 'm'
+  speedUnit: 'kt' | 'kmh'
+  distanceUnit: 'nm' | 'km'
+  showLabels: boolean
+  iconScale: 'small' | 'medium' | 'large'
+  refreshSec: 15 | 30 | 60
+  paused: boolean
+}
+
+const DEFAULT_SETTINGS: MapSettings = {
+  altitudeUnit: 'ft',
+  speedUnit: 'kt',
+  distanceUnit: 'nm',
+  showLabels: false,
+  iconScale: 'medium',
+  refreshSec: 30,
+  paused: false,
+}
+
+function loadSettings(): MapSettings {
+  try {
+    const raw = localStorage.getItem('ops-map-settings')
+    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS
+  } catch {
+    return DEFAULT_SETTINGS
+  }
+}
+
 export type AirportFilter = 'ALL' | 'DXB' | 'DWC'
 
 export type SelectedFlight = {
@@ -46,6 +75,15 @@ type MapSelectionContextValue = {
   hourlyCounts: HourlyCounts
   setHourlyCounts: (counts: HourlyCounts) => void
   showEmiratesLayer: boolean
+  showCountryNames: boolean
+  setShowCountryNames: (show: boolean) => void
+  showNotams: boolean
+  setShowNotams: (show: boolean) => void
+  selectedNotamId: string | null
+  setSelectedNotamId: (id: string | null) => void
+  settings: MapSettings
+  updateSettings: (patch: Partial<MapSettings>) => void
+  resetFilters: () => void
   setShowEmiratesLayer: (show: boolean) => void
   pinnedCallsigns: string[]
   togglePin: (callsign: string) => void
@@ -73,6 +111,28 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
     list.includes(v) ? list.filter((x) => x !== v) : [...list, v]
   const toggleTypeFilter = (t: string) => setTypeFilter((l) => toggleIn(l, t))
   const toggleStatusFilter = (s: string) => setStatusFilter((l) => toggleIn(l, s))
+  const [showCountryNames, setShowCountryNames] = useState(true)
+  const [showNotams, setShowNotams] = useState(false)
+  const [selectedNotamId, setSelectedNotamId] = useState<string | null>(null)
+  const [settings, setSettings] = useState<MapSettings>(loadSettings)
+  const updateSettings = (patch: Partial<MapSettings>) =>
+    setSettings((s) => {
+      const next = { ...s, ...patch }
+      try {
+        localStorage.setItem('ops-map-settings', JSON.stringify(next))
+      } catch {
+        /* storage unavailable */
+      }
+      return next
+    })
+  const resetFilters = () => {
+    setAirportFilter('ALL')
+    setTypeFilter([])
+    setStatusFilter([])
+    setFlowFilter(null)
+    setHourFilter(null)
+    setHourMode('both')
+  }
   const [pinnedCallsigns, setPinnedCallsigns] = useState<string[]>([])
   const togglePin = (callsign: string) =>
     setPinnedCallsigns((p) => (p.includes(callsign) ? p.filter((c) => c !== callsign) : [...p, callsign]))
@@ -109,6 +169,15 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
         setHourlyCounts,
         showEmiratesLayer,
         setShowEmiratesLayer,
+        showCountryNames,
+        setShowCountryNames,
+        showNotams,
+        setShowNotams,
+        selectedNotamId,
+        setSelectedNotamId,
+        settings,
+        updateSettings,
+        resetFilters,
         pinnedCallsigns,
         togglePin,
       }}

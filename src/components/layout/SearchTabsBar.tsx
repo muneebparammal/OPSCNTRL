@@ -2,6 +2,7 @@ import { icons } from '../ui/Icon'
 import { useState } from 'react'
 import { type AirportFilter, useMapSelection } from '../../context/MapSelectionContext'
 import type { MapStyleId } from './MapCanvas'
+import { SettingsDropdown } from '../ui/SettingsDropdown'
 import { MapTypeDropdown } from '../ui/MapTypeDropdown'
 import { PillTabs } from '../ui/Tabs'
 
@@ -21,6 +22,7 @@ export function SearchTabsBar({
   onMapTypeChange: (id: MapStyleId) => void
 }) {
   const [showMapType, setShowMapType] = useState(mapTypeDefaultOpen)
+  const [showSettings, setShowSettings] = useState(false)
   const { airportFilter, setAirportFilter } = useMapSelection()
 
   return (
@@ -50,7 +52,14 @@ export function SearchTabsBar({
           <button
             type="button"
             aria-label="Settings"
-            className="flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary"
+            aria-pressed={showSettings}
+            onClick={() => {
+              setShowSettings((v) => !v)
+              setShowMapType(false)
+            }}
+            className={`flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary ${
+              showSettings ? 'bg-bg-primary shadow-sm' : ''
+            }`}
           >
             <icons.settings size={16} />
           </button>
@@ -65,7 +74,10 @@ export function SearchTabsBar({
             type="button"
             aria-label="Map layers"
             aria-pressed={showMapType}
-            onClick={() => setShowMapType((v) => !v)}
+            onClick={() => {
+              setShowMapType((v) => !v)
+              setShowSettings(false)
+            }}
             className={`flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary ${
               showMapType ? 'bg-bg-primary shadow-sm' : ''
             }`}
@@ -84,6 +96,11 @@ export function SearchTabsBar({
             <icons.panelRight size={16} />
           </button>
         </div>
+        {showSettings && (
+          <div className="absolute top-11 right-0 z-30">
+            <SettingsDropdown />
+          </div>
+        )}
         {showMapType && (
           <div className="absolute top-11 right-0 z-30">
             <MapTypeDropdown mapType={mapType} onMapTypeChange={onMapTypeChange} />

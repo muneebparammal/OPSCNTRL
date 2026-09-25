@@ -18,6 +18,8 @@ import { flightAttrs } from '../../data/flightAttributes'
 import { type LiveAircraft, useLiveFleet } from '../../hooks/useLiveFleet'
 import { useRainRadar } from '../../hooks/useRainRadar'
 import { AircraftIcon, FLOW_COLORS, type FlowKind } from './AircraftIcon'
+import { icons } from '../ui/Icon'
+import { notams, type NotamSeverity } from '../../data/notams'
 import { Tooltip } from '../ui/Tooltip'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
@@ -97,6 +99,14 @@ function useSimulatedFleet(count: number): MapAircraft[] {
 
 // Dubai International Airport (DXB)
 const DXB = { lng: 55.3644, lat: 25.2532 }
+const NOTAM_COLORS: Record<NotamSeverity, string> = {
+  high: '#d71921',
+  medium: '#f08c00',
+  low: '#1c80cf',
+}
+const ICON_SCALE = { small: 0.8, medium: 1, large: 1.3 }
+const COUNTRY_LABEL_LAYERS = ['place_country_1', 'place_country_2']
+
 const DXB_RING_RADII_NM = [20, 40, 60]
 
 // Approximates a circle as a GeoJSON polygon for the DXB range rings — a
@@ -177,8 +187,20 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     hourFilter,
     hourMode,
     setHourlyCounts,
+    showCountryNames,
+    showNotams,
+    selectedNotamId,
+    setSelectedNotamId,
+    settings,
   } = useMapSelection()
-  const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
+  const {
+    aircraft: liveFleet,
+    status,
+    lastUpdated,
+  } = useLiveFleet({
+    intervalMs: settings.refreshSec * 1000,
+    paused: settings.paused,
+  })
   const emiratesFleet = useMemo(
     () => liveFleet.filter((a) => a.callsign.toUpperCase().startsWith('UAE')),
     [liveFleet],
@@ -256,6 +278,32 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         (bounds[2] - bounds[0] >= 340 || (a.lng >= bounds[0] - 2 && a.lng <= bounds[2] + 2)))
     return filteredExceptHour.filter((a) => inHour(a) && inView(a)).slice(0, MAX_VISIBLE_AIRCRAFT)
   }, [filteredExceptHour, hourFilter, hourMode, bounds])
+
+  const applyCountryLabels = () => {
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    for (const id of COUNTRY_LABEL_LAYERS) {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, 'visibility', showCountryNames ? 'visible' : 'none')
+      }
+    }
+  }
+  useEffect(applyCountryLabels, [showCountryNames, mapType])
+
+  const notamGeoJson = useMemo(
+    () => ({
+      type: 'FeatureCollection' as const,
+      features: notams.map((n) => ({
+        type: 'Feature' as const,
+        properties: { id: n.id, severity: n.severity },
+        geometry: {
+          type: 'Polygon' as const,
+          coordinates: [circleRing(n.lng, n.lat, n.radiusNm).coordinates],
+        },
+      })),
+    }),
+    [],
+  )
 
   const firstFlyRef = useRef(true)
   useEffect(() => {
@@ -348,7 +396,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         mapStyle={mapStyles[mapType]}
         attributionControl={false}
         style={{ width: '100%', height: '100%' }}
-        onLoad={updateBounds}
+        onLoad={() => {
+          updateBounds()
+          applyCountryLabels()
+        }}
+        onStyleData={applyCountryLabels}
         onMoveEnd={updateBounds}
         onZoom={(e) => onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))}
       >
@@ -442,6 +494,68 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             )
           })}
 
+        {showNotams && (
+          <Source id="notam-areas" type="geojson" data={notamGeoJson}>
+            <Layer
+              id="notam-areas-fill"
+              type="fill"
+              paint={{
+                'fill-color': [
+                  'match',
+                  ['get', 'severity'],
+                  'high',
+                  NOTAM_COLORS.high,
+                  'medium',
+                  NOTAM_COLORS.medium,
+                  NOTAM_COLORS.low,
+                ],
+                'fill-opacity': 0.18,
+              }}
+            />
+          </Source>
+        )}
+        {showNotams && (
+          <Source id="notam-outlines" type="geojson" data={notamGeoJson}>
+            <Layer
+              id="notam-outlines-line"
+              type="line"
+              paint={{
+                'line-color': [
+                  'match',
+                  ['get', 'severity'],
+                  'high',
+                  NOTAM_COLORS.high,
+                  'medium',
+                  NOTAM_COLORS.medium,
+                  NOTAM_COLORS.low,
+                ],
+                'line-width': 1.5,
+                'line-dasharray': [2, 2],
+              }}
+            />
+          </Source>
+        )}
+        {showNotams &&
+          notams.map((n) => {
+            const active = selectedNotamId === n.id
+            return (
+              <Marker key={n.id} longitude={n.lng} latitude={n.lat}>
+                <Tooltip label={`${n.id} · ${n.title}`}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedNotamId(active ? null : n.id)}
+                    style={{ background: NOTAM_COLORS[n.severity] }}
+                    className={`flex cursor-pointer items-center justify-center rounded-full border-2 border-white text-white shadow-sm ${
+                      active ? 'size-7 ring-2 ring-fg-secondary' : 'size-6'
+                    }`}
+                  >
+                    <icons.alert size={14} />
+                  </button>
+                </Tooltip>
+              </Marker>
+            )
+          })}
+
         {routeGeoJson && (
           <Source id="flight-route" type="geojson" data={routeGeoJson}>
             <Layer
@@ -499,7 +613,17 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                 }
                 className="relative cursor-pointer border-0 bg-transparent p-0"
               >
-                <AircraftIcon kind={kindOf(a)} fourEngine={isFourEngine(a)} heading={a.heading} />
+                <AircraftIcon
+                  kind={kindOf(a)}
+                  fourEngine={isFourEngine(a)}
+                  heading={a.heading}
+                  size={(isFourEngine(a) ? 34 : 22) * ICON_SCALE[settings.iconScale]}
+                />
+                {settings.showLabels && (
+                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 rounded bg-fg-secondary/85 px-1 text-[9px] font-semibold whitespace-nowrap text-white">
+                    {a.callsign}
+                  </span>
+                )}
               </button>
             </div>
           </Marker>

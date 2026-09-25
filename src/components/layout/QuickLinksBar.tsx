@@ -1,6 +1,7 @@
 import type { IconComponent } from '../ui/Icon'
 import { icons } from '../ui/Icon'
 import { useState } from 'react'
+import { notams } from '../../data/notams'
 import { useMapSelection } from '../../context/MapSelectionContext'
 import { Tooltip } from '../ui/Tooltip'
 
@@ -54,9 +55,10 @@ export function QuickLinksBar({
     airportFilter,
     flowFilter,
     setFlowFilter,
+    showNotams,
+    setShowNotams,
   } = useMapSelection()
   const [playBackActive, setPlayBackActive] = useState(false)
-  const [notamsActive, setNotamsActive] = useState(false)
 
   const airport = airportFilter === 'ALL' ? 'DXB' : airportFilter
 
@@ -83,9 +85,9 @@ export function QuickLinksBar({
       <QuickLinkButton
         icon={icons.notams}
         label="NOTAMs"
-        active={notamsActive}
-        onClick={() => setNotamsActive((v) => !v)}
-        badge={10}
+        active={showNotams}
+        onClick={() => setShowNotams(!showNotams)}
+        badge={notams.length}
       />
       <QuickLinkButton
         icon={icons.weather}
