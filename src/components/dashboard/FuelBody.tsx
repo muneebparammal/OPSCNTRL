@@ -76,29 +76,33 @@ function ArrivalReserveTile({
       ? { text: `+${num(diff)} ${unit} above reserve`, cls: 'bg-bg-green-subtle text-fg-green' }
       : { text: `${num(-diff)} ${unit} below reserve`, cls: 'bg-bg-red-subtle text-fg-red' }
   return (
-    <div className="flex w-full items-center gap-3 rounded-2xl bg-bg-secondary px-3 py-3">
-      <FuelFillIcon percent={pct} color={color} size={40} />
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex gap-4">
+    <div className="flex w-full flex-col gap-2 border-t border-border-primary pt-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-extrabold tracking-wide text-fg-muted uppercase">
+          Arrival vs reserve
+        </p>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${status.cls}`}>
+          {status.text}
+        </span>
+      </div>
+      <div className="flex items-center gap-3 px-1">
+        <FuelFillIcon percent={pct} color={color} size={30} />
+        <div className="grid flex-1 grid-cols-2 gap-x-4">
           <div>
-            <p className="text-[11px] font-extrabold text-fg-muted">ARRIVED WITH</p>
+            <p className="text-[11px] font-semibold text-fg-muted">Arrived with</p>
             <p className="text-base leading-5 font-bold text-fg-primary">
               {num(arrived)} <span className="text-[11px] font-medium text-fg-muted">{unit}</span>
             </p>
           </div>
           <div>
-            <p className="text-[11px] font-extrabold text-fg-muted">PLANNED RESERVE</p>
+            <p className="text-[11px] font-semibold text-fg-muted">
+              Planned reserve · {Math.round(plannedFuel ? (reserve / plannedFuel) * 100 : 0)}%
+            </p>
             <p className="text-base leading-5 font-bold text-fg-primary">
               {num(reserve)} <span className="text-[11px] font-medium text-fg-muted">{unit}</span>
             </p>
-            <p className="text-[11px] font-semibold text-fg-tertiary">
-              {Math.round(plannedFuel ? (reserve / plannedFuel) * 100 : 0)}% of planned fuel
-            </p>
           </div>
         </div>
-        <span className={`w-fit rounded-full px-2 py-0.5 text-[11px] font-bold ${status.cls}`}>
-          {status.text}
-        </span>
       </div>
     </div>
   )
