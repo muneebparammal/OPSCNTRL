@@ -215,6 +215,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             ))}
       </Map>
 
+      {/* Dims the basemap so markers, FIR highlights, and other overlays read
+          clearly on top — matches the dark alpha treatment from the original
+          design. pointer-events-none so it never blocks map interaction. */}
+      <div className="pointer-events-none absolute inset-0 bg-black/15" />
+
       <div className="absolute bottom-6 left-6 z-10 flex items-center gap-1.5 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
         <span
           className={`size-1.5 rounded-full ${
