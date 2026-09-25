@@ -1,4 +1,7 @@
+import blueA380 from '../../assets/icons/blue-4engine.svg'
 import yellowA380 from '../../assets/icons/yellow-4engine.svg'
+
+const A380_ART: Partial<Record<string, string>> = { departure: blueA380, arrival: yellowA380 }
 
 export const FLOW_COLORS = {
   departure: '#1c80cf',
@@ -44,11 +47,12 @@ export function AircraftIcon({
   size?: number
 }) {
   const px = size ?? (fourEngine ? 34 : 22)
-  if (fourEngine && kind === 'arrival') {
+  const art = fourEngine ? A380_ART[kind] : undefined
+  if (art) {
     // Supplied artwork points east, so rotate from heading - 90.
     return (
       <img
-        src={yellowA380}
+        src={art}
         alt=""
         width={px}
         height={px}
