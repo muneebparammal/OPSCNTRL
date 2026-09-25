@@ -102,47 +102,20 @@ function Delta({ actual, planned }: { actual: number; planned: number }) {
   )
 }
 
-function BarRow({
+function Row({
   label,
   value,
-  max,
-  color,
-  fmt,
   trailing,
 }: {
   label: string
-  value: number
-  max: number
-  color: string
-  fmt: (n: number) => string
+  value: string
   trailing?: React.ReactNode
 }) {
   return (
-    <div className="flex w-full flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <p className="flex-1 text-xs font-semibold text-fg-muted">{label}</p>
-        {trailing}
-        <p className="text-sm font-bold text-fg-primary">{fmt(value)}</p>
-      </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${max ? Math.min(100, (value / max) * 100) : 0}%`,
-            background: color,
-            transition: 'width 500ms ease',
-          }}
-        />
-      </div>
-    </div>
-  )
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex w-full flex-col gap-3 rounded-xl border border-border-primary bg-bg-muted p-3">
-      <p className="text-xs font-extrabold tracking-wide text-fg-muted uppercase">{title}</p>
-      {children}
+    <div className="flex w-full items-center gap-2 px-1 py-1">
+      <p className="flex-1 text-xs font-semibold text-fg-muted">{label}</p>
+      {trailing}
+      <p className="text-sm font-bold text-fg-primary">{value}</p>
     </div>
   )
 }
@@ -163,18 +136,14 @@ export function FuelStatusCard({
 
   const remaining = f.fuelDepartActual ? f.fuelOnBoard / f.fuelDepartActual : 0
   const burned = f.fuelDepartActual ? f.fuelDepartActual - f.fuelOnBoard : 0
-  const maxFuel = Math.max(f.plannedFuel, f.fuelDepartActual, 1)
   const maxWeight = Math.max(f.towEstimate, f.towActual, 1)
 
   return (
     <CollapsibleCard icon={Fuel} title="Fuel Status" defaultOpen={defaultOpen}>
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-base font-bold text-fg-primary">{f.flight}</p>
-        {f.dep && f.arr && (
-          <p className="rounded-full bg-bg-secondary px-2 py-0.5 text-xs font-bold text-fg-secondary">
-            {f.dep} → {f.arr}
-          </p>
-        )}
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-bold text-fg-primary">
+          {f.dep && f.arr ? `${f.dep} → ${f.arr}` : f.flight}
+        </p>
         {f.date && <p className="text-xs text-fg-muted">{f.date}</p>}
         <div className="flex-1" />
         <div className="flex h-7 items-center rounded-full bg-bg-secondary p-0.5">
@@ -196,112 +165,66 @@ export function FuelStatusCard({
 
       <Stepper f={f} />
 
-      <div className="flex w-full items-center gap-4 rounded-xl border border-border-primary bg-bg-muted p-3">
+      <div className="flex w-full items-center gap-4 rounded-xl bg-bg-muted p-3">
         <Gauge percent={remaining} empty={pending || !f.fuelDepartActual} />
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div>
-            <p className="text-xs font-semibold text-fg-muted">Fuel on board</p>
-            <p className="text-2xl leading-7 font-bold text-fg-primary">{fmt(f.fuelOnBoard)}</p>
-          </div>
-          <div className="flex gap-4">
-            <div>
-              <p className="text-[11px] font-semibold text-fg-muted">Departed with</p>
-              <p className="text-sm font-bold text-fg-blue">{fmt(f.fuelDepartActual)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold text-fg-muted">Burned so far</p>
-              <p className="text-sm font-bold text-fg-secondary">{fmt(burned)}</p>
-            </div>
-          </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="text-xs font-semibold text-fg-muted">On board</p>
+          <p className="text-2xl leading-7 font-bold text-fg-primary">{fmt(f.fuelOnBoard)}</p>
+          <p className="text-xs text-fg-muted">Burned {fmt(burned)}</p>
         </div>
       </div>
 
       {pending && (
-        <div className="flex items-start gap-2 rounded-xl bg-bg-orange-inverse px-3 py-2.5">
-          <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#f08c00] text-[10px] font-bold text-white">
-            !
-          </span>
-          <p className="text-xs font-medium text-fg-tertiary">
-            Fuel and weight data isn't populated yet — this flight may not have departed. Figures
-            will appear here once the load sheet is received.
-          </p>
-        </div>
+        <p className="px-1 text-xs text-fg-muted">
+          No fuel or weight data yet — the flight may not have departed.
+        </p>
       )}
 
-      <Section title="Fuel plan vs actual">
-        <BarRow
-          label="Planned fuel"
-          value={f.plannedFuel}
-          max={maxFuel}
-          color="var(--color-fg-grey-blue-chart)"
-          fmt={fmt}
-        />
-        <BarRow
-          label="Fuel at departure"
-          value={f.fuelDepartActual}
-          max={maxFuel}
-          color="var(--color-fg-blue)"
-          fmt={fmt}
+      <div className="flex w-full flex-col divide-y divide-border-primary">
+        <Row label="Planned fuel" value={fmt(f.plannedFuel)} />
+        <Row
+          label="Departed with"
+          value={fmt(f.fuelDepartActual)}
           trailing={<Delta actual={f.fuelDepartActual} planned={f.plannedFuel} />}
         />
-        <BarRow
-          label="Planned burn"
-          value={f.plannedBurn}
-          max={maxFuel}
-          color="#f08c00"
-          fmt={fmt}
-        />
-      </Section>
-
-      <Section title="Weights">
-        <div className="flex w-full flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <p className="flex-1 text-xs font-semibold text-fg-muted">Take-off weight (actual)</p>
-            <Delta actual={f.towActual} planned={f.towEstimate} />
-            <p className="text-sm font-bold text-fg-primary">{fmt(f.towActual)}</p>
-          </div>
-          <div className="flex h-3 w-full overflow-hidden rounded-full bg-bg-secondary">
-            <div
-              className="h-full bg-fg-grey-blue-chart"
-              style={{ width: `${(f.zfwActual / maxWeight) * 100}%` }}
-            />
-            <div
-              className="h-full bg-fg-blue"
-              style={{ width: `${(f.fuelDepartActual / maxWeight) * 100}%` }}
-            />
-          </div>
-          <div className="flex gap-4 text-[11px] font-semibold text-fg-muted">
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-fg-grey-blue-chart" /> Zero fuel{' '}
-              {fmt(f.zfwActual)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-fg-blue" /> Fuel {fmt(f.fuelDepartActual)}
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            ['TOW estimate', f.towEstimate],
-            ['TOW actual', f.towActual],
-            ['ZFW estimate', f.zfwEstimate],
-            ['ZFW actual', f.zfwActual],
-          ].map(([label, value]) => (
-            <div key={label as string} className="rounded-lg bg-bg-primary px-3 py-2">
-              <p className="text-[11px] font-semibold text-fg-muted">{label}</p>
-              <p className="text-sm font-bold text-fg-primary">{fmt(value as number)}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Chip tone="grey-blue">Unit {f.unit}</Chip>
-        <Chip tone="grey-blue">Density {f.density} KG/LT</Chip>
-        {f.demo && (
-          <p className="text-[11px] text-fg-muted">Demo values until a fuel feed is connected</p>
-        )}
+        <Row label="Planned burn" value={fmt(f.plannedBurn)} />
       </div>
+
+      <div className="flex w-full flex-col gap-2">
+        <div className="flex h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
+          <div
+            className="h-full bg-fg-grey-blue-chart"
+            style={{ width: `${(f.zfwActual / maxWeight) * 100}%` }}
+          />
+          <div
+            className="h-full bg-fg-blue"
+            style={{ width: `${(f.fuelDepartActual / maxWeight) * 100}%` }}
+          />
+        </div>
+        <div className="flex gap-3 text-[11px] font-semibold text-fg-muted">
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-fg-grey-blue-chart" /> Zero fuel
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-fg-blue" /> Fuel
+          </span>
+        </div>
+        <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 px-1 text-sm">
+          <span />
+          <span className="text-right text-[11px] font-extrabold text-fg-muted">EST</span>
+          <span className="text-right text-[11px] font-extrabold text-fg-muted">ACT</span>
+          <span className="text-xs font-semibold text-fg-muted">Take-off weight</span>
+          <span className="text-right font-semibold text-fg-tertiary">{fmt(f.towEstimate)}</span>
+          <span className="text-right font-bold text-fg-primary">{fmt(f.towActual)}</span>
+          <span className="text-xs font-semibold text-fg-muted">Zero-fuel weight</span>
+          <span className="text-right font-semibold text-fg-tertiary">{fmt(f.zfwEstimate)}</span>
+          <span className="text-right font-bold text-fg-primary">{fmt(f.zfwActual)}</span>
+        </div>
+      </div>
+
+      <p className="px-1 text-[11px] text-fg-muted">
+        Density {f.density} KG/LT{f.demo ? ' · demo values' : ''}
+      </p>
     </CollapsibleCard>
   )
 }
