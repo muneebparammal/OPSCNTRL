@@ -51,6 +51,59 @@ function FillTile({
   )
 }
 
+// Arrival fuel and the planned reserve belong together: on landing, arrival
+// fuel should not be below the reserve the plan left after the burn.
+function ArrivalReserveTile({
+  arrived,
+  reserve,
+  plannedFuel,
+  num,
+  unit,
+}: {
+  arrived: number
+  reserve: number
+  plannedFuel: number
+  num: (kg: number) => string
+  unit: string
+}) {
+  const landed = arrived > 0
+  const diff = arrived - reserve
+  const pct = reserve ? Math.min(1, arrived / reserve) : 0
+  const color = !landed ? GREY : diff >= 0 ? GREEN : 'var(--color-fg-red)'
+  const status = !landed
+    ? { text: 'Awaiting landing', cls: 'bg-bg-tertiary text-fg-tertiary' }
+    : diff >= 0
+      ? { text: `+${num(diff)} ${unit} above reserve`, cls: 'bg-bg-green-subtle text-fg-green' }
+      : { text: `${num(-diff)} ${unit} below reserve`, cls: 'bg-bg-red-subtle text-fg-red' }
+  return (
+    <div className="flex w-full items-center gap-3 rounded-2xl bg-bg-secondary px-3 py-3">
+      <FuelFillIcon percent={pct} color={color} size={40} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex gap-4">
+          <div>
+            <p className="text-[11px] font-extrabold text-fg-muted">ARRIVED WITH</p>
+            <p className="text-base leading-5 font-bold text-fg-primary">
+              {num(arrived)} <span className="text-[11px] font-medium text-fg-muted">{unit}</span>
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] font-extrabold text-fg-muted">PLANNED RESERVE</p>
+            <p className="text-base leading-5 font-bold text-fg-primary">
+              {num(reserve)} <span className="text-[11px] font-medium text-fg-muted">{unit}</span>
+            </p>
+            <p className="text-[11px] font-semibold text-fg-tertiary">
+              {Math.round(plannedFuel ? (reserve / plannedFuel) * 100 : 0)}% of planned fuel
+            </p>
+          </div>
+        </div>
+        <span className={`w-fit rounded-full px-2 py-0.5 text-[11px] font-bold ${status.cls}`}>
+          {status.text}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export function FuelBody({ f, unit, num, fmt, pending, remaining }: FuelProps) {
   const [tab, setTab] = useState<'Fuel' | 'Weight'>('Fuel')
   const ratio = (a: number, b: number) => (b ? a / b : 0)
@@ -115,23 +168,14 @@ export function FuelBody({ f, unit, num, fmt, pending, remaining }: FuelProps) {
               note="of departure"
               color={GREEN}
             />
-            <FillTile
-              label="ARRIVED WITH"
-              value={num(f.fuelArriveActual)}
-              unit={unit}
-              percent={ratio(f.fuelArriveActual, f.fuelDepartActual)}
-              note="of departure"
-              color={BLUE}
-            />
-            <FillTile
-              label="RESERVE AFTER BURN"
-              value={num(reserve)}
-              unit={unit}
-              percent={ratio(reserve, f.plannedFuel)}
-              note="of planned fuel"
-              color={GREEN}
-            />
           </div>
+          <ArrivalReserveTile
+            arrived={f.fuelArriveActual}
+            reserve={reserve}
+            plannedFuel={f.plannedFuel}
+            num={num}
+            unit={unit}
+          />
         </>
       ) : (
         <>
