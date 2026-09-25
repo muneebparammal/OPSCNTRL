@@ -46,12 +46,17 @@ export function QuickLinksBar({
   airspaceActive = false,
   onAirspaceClick,
 }: QuickLinksBarProps) {
-  const { showDxbRing, setShowDxbRing, showWeather, setShowWeather, airportFilter } =
-    useMapSelection()
+  const {
+    showDxbRing,
+    setShowDxbRing,
+    showWeather,
+    setShowWeather,
+    airportFilter,
+    flowFilter,
+    setFlowFilter,
+  } = useMapSelection()
   const [playBackActive, setPlayBackActive] = useState(false)
   const [notamsActive, setNotamsActive] = useState(false)
-  const [departureActive, setDepartureActive] = useState(false)
-  const [arrivalActive, setArrivalActive] = useState(false)
 
   const airport = airportFilter === 'ALL' ? 'DXB' : airportFilter
 
@@ -91,14 +96,14 @@ export function QuickLinksBar({
       <QuickLinkButton
         icon={icons.takeoff}
         label={`Departure from ${airport}`}
-        active={departureActive}
-        onClick={() => setDepartureActive((v) => !v)}
+        active={flowFilter === 'departure'}
+        onClick={() => setFlowFilter(flowFilter === 'departure' ? null : 'departure')}
       />
       <QuickLinkButton
         icon={icons.landing}
         label={`Arrival to ${airport}`}
-        active={arrivalActive}
-        onClick={() => setArrivalActive((v) => !v)}
+        active={flowFilter === 'arrival'}
+        onClick={() => setFlowFilter(flowFilter === 'arrival' ? null : 'arrival')}
       />
     </div>
   )

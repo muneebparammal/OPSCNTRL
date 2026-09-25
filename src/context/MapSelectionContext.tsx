@@ -1,6 +1,12 @@
 import type { LiveAircraft } from '../hooks/useLiveFleet'
 import { createContext, type ReactNode, useContext, useState } from 'react'
 
+export type HourlyCounts = { departure: number[]; arrival: number[] }
+const emptyHourly = (): HourlyCounts => ({
+  departure: Array(24).fill(0),
+  arrival: Array(24).fill(0),
+})
+
 export type AirportFilter = 'ALL' | 'DXB' | 'DWC'
 
 export type SelectedFlight = {
@@ -27,6 +33,18 @@ type MapSelectionContextValue = {
   setShowAirportsLayer: (show: boolean) => void
   selectedAirportIcao: string | null
   setSelectedAirportIcao: (icao: string | null) => void
+  typeFilter: string[]
+  toggleTypeFilter: (type: string) => void
+  statusFilter: string[]
+  toggleStatusFilter: (status: string) => void
+  flowFilter: 'departure' | 'arrival' | null
+  setFlowFilter: (flow: 'departure' | 'arrival' | null) => void
+  hourFilter: number | null
+  setHourFilter: (hour: number | null) => void
+  hourMode: 'both' | 'departure' | 'arrival'
+  setHourMode: (mode: 'both' | 'departure' | 'arrival') => void
+  hourlyCounts: HourlyCounts
+  setHourlyCounts: (counts: HourlyCounts) => void
   showEmiratesLayer: boolean
   setShowEmiratesLayer: (show: boolean) => void
   pinnedCallsigns: string[]
@@ -45,6 +63,16 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
   const [showAirportsLayer, setShowAirportsLayer] = useState(false)
   const [selectedAirportIcao, setSelectedAirportIcao] = useState<string | null>(null)
   const [showEmiratesLayer, setShowEmiratesLayer] = useState(false)
+  const [typeFilter, setTypeFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState<string[]>([])
+  const [flowFilter, setFlowFilter] = useState<'departure' | 'arrival' | null>(null)
+  const [hourFilter, setHourFilter] = useState<number | null>(null)
+  const [hourMode, setHourMode] = useState<'both' | 'departure' | 'arrival'>('both')
+  const [hourlyCounts, setHourlyCounts] = useState<HourlyCounts>(emptyHourly)
+  const toggleIn = (list: string[], v: string) =>
+    list.includes(v) ? list.filter((x) => x !== v) : [...list, v]
+  const toggleTypeFilter = (t: string) => setTypeFilter((l) => toggleIn(l, t))
+  const toggleStatusFilter = (s: string) => setStatusFilter((l) => toggleIn(l, s))
   const [pinnedCallsigns, setPinnedCallsigns] = useState<string[]>([])
   const togglePin = (callsign: string) =>
     setPinnedCallsigns((p) => (p.includes(callsign) ? p.filter((c) => c !== callsign) : [...p, callsign]))
@@ -67,6 +95,18 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
         setShowAirportsLayer,
         selectedAirportIcao,
         setSelectedAirportIcao,
+        typeFilter,
+        toggleTypeFilter,
+        statusFilter,
+        toggleStatusFilter,
+        flowFilter,
+        setFlowFilter,
+        hourFilter,
+        setHourFilter,
+        hourMode,
+        setHourMode,
+        hourlyCounts,
+        setHourlyCounts,
         showEmiratesLayer,
         setShowEmiratesLayer,
         pinnedCallsigns,

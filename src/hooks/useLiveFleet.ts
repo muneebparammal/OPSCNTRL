@@ -17,13 +17,9 @@ export type LiveAircraft = {
 
 export type LiveFleetStatus = 'connecting' | 'live' | 'error'
 
-// Gulf / Middle East region, matching the OPS Control map's default extent.
-const BBOX = { lamin: 5, lomin: 20, lamax: 38, lomax: 75 }
-
-// OpenSky's anonymous tier asks for no more than one bounding-box request
-// roughly every 10s; poll a bit more conservatively to stay well clear of it.
-const POLL_INTERVAL_MS = 20_000
-const MAX_MARKERS = 150
+// Worldwide snapshot; OpenSky's anonymous tier asks for no more than one
+// request roughly every 10s, so poll conservatively.
+const POLL_INTERVAL_MS = 30_000
 
 // In dev, Vite's server proxy at /opensky-api handles CORS (see
 // vite.config.ts). In production (a static host with no server of its own,
@@ -36,13 +32,10 @@ type OpenSkyResponse = {
   states: (string | number | boolean | null)[][] | null
 }
 
-function parseStates(states: OpenSkyResponse['states'], emiratesOnly: boolean): LiveAircraft[] {
+function parseStates(states: OpenSkyResponse['states']): LiveAircraft[] {
   if (!states) return []
-  const usable = states.filter((s) => s[5] != null && s[6] != null)
-  return (emiratesOnly
-    ? usable.filter((s) => String(s[1] ?? '').trim().toUpperCase().startsWith('UAE'))
-    : usable.slice(0, MAX_MARKERS)
-  )
+  return states
+    .filter((s) => s[5] != null && s[6] != null)
     .map((s) => ({
       id: String(s[0]),
       callsign: String(s[1] ?? '').trim() || String(s[0]),
@@ -59,29 +52,23 @@ function parseStates(states: OpenSkyResponse['states'], emiratesOnly: boolean): 
     }))
 }
 
-// emiratesOnly polls the whole world (no bounding box) and keeps only callsigns
-// with Emirates' ICAO prefix, UAE. enabled=false skips polling entirely.
-export function useLiveFleet({ emiratesOnly = false, enabled = true } = {}) {
+export function useLiveFleet() {
   const [aircraft, setAircraft] = useState<LiveAircraft[]>([])
   const [status, setStatus] = useState<LiveFleetStatus>('connecting')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
-    if (!enabled) return
     let cancelled = false
     let timer: number
 
     async function poll() {
       try {
-        const { lamin, lomin, lamax, lomax } = BBOX
-        const url = emiratesOnly
-          ? `${PROXY_BASE}/states/all`
-          : `${PROXY_BASE}/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
+        const url = `${PROXY_BASE}/states/all`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`OpenSky responded ${res.status}`)
         const data: OpenSkyResponse = await res.json()
         if (cancelled) return
-        setAircraft(parseStates(data.states, emiratesOnly))
+        setAircraft(parseStates(data.states))
         setStatus('live')
         setLastUpdated(new Date())
       } catch {
@@ -96,7 +83,7 @@ export function useLiveFleet({ emiratesOnly = false, enabled = true } = {}) {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [emiratesOnly, enabled])
+  }, [])
 
   return { aircraft, status, lastUpdated }
 }

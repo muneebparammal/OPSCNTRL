@@ -68,3 +68,21 @@ export function estimateRoute(pos: { lng: number; lat: number; heading: number }
       }
     : { inbound, solid: greatCircle(hub, here), dashed: projection(pos.heading) }
 }
+
+export function distanceKm(a: LngLat, b: LngLat): number {
+  const dLat = rad(b[1] - a[1])
+  const dLng = rad(b[0] - a[0])
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLng / 2) ** 2
+  return 2 * R_KM * Math.asin(Math.sqrt(h))
+}
+
+// Relative to the hub: on the ground at the hub or heading away = departure.
+export function flowDirection(
+  pos: { lng: number; lat: number; heading: number; onGround?: boolean },
+  hub: LngLat,
+): 'departure' | 'arrival' {
+  const here: LngLat = [pos.lng, pos.lat]
+  if (pos.onGround && distanceKm(here, hub) < 20) return 'departure'
+  return angleDiff(pos.heading, bearing(here, hub)) < 90 ? 'arrival' : 'departure'
+}

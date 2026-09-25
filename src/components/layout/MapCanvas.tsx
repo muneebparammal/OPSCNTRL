@@ -7,7 +7,7 @@ import { config as maplibreConfig } from 'maplibre-gl'
 // emit it as its own real asset with a correct, base-path-aware URL.
 import MaplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Building2 } from 'lucide-react'
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react'
 import Map, { Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre'
 import planeBlueSolid from '../../assets/icons/plane-blue-solid.png'
 import planeBlueOutline from '../../assets/icons/plane-blue-outline.png'
@@ -19,8 +19,9 @@ import { useMapSelection } from '../../context/MapSelectionContext'
 import { airports } from '../../data/airports'
 import firBoundaries from '../../data/firBoundaries.geojson?url'
 import { firRegions } from '../../data/firRegions'
-import { estimateRoute } from './routeGeometry'
-import { useLiveFleet } from '../../hooks/useLiveFleet'
+import { distanceKm, estimateRoute, flowDirection } from './routeGeometry'
+import { flightAttrs } from '../../data/flightAttributes'
+import { type LiveAircraft, useLiveFleet } from '../../hooks/useLiveFleet'
 import { useRainRadar } from '../../hooks/useRainRadar'
 import { Tooltip } from '../ui/Tooltip'
 
@@ -28,7 +29,12 @@ maplibreConfig.WORKER_URL = MaplibreWorker
 
 export type MapStyleId = 'light' | 'dark' | 'satellite'
 
-const INITIAL_ZOOM = 3.6
+const INITIAL_ZOOM = 2
+const WORLD_VIEW = { longitude: 40, latitude: 25, zoom: INITIAL_ZOOM }
+const DWC = { lng: 55.1614, lat: 24.8967 }
+const MAX_VISIBLE_AIRCRAFT = 700
+const NEAR_AIRPORT_KM = 250
+const FLOW_RADIUS_KM = 700
 
 const rasterStyle = (tiles: string[], attribution: string) => ({
   version: 8 as const,
@@ -84,30 +90,47 @@ function PlaneMarker({
   )
 }
 
-type SimAircraft = {
+type MapAircraft = {
+  id: string
+  callsign: string
   lng: number
   lat: number
   heading: number
+  altitude: number | null
+  onGround: boolean
+  verticalRate: number | null
+  live?: LiveAircraft
   icon: string
   size: number
 }
 
 // Fallback traffic shown while the live feed is connecting or unreachable,
-// so the map never looks empty/broken.
-function useSimulatedFleet(count: number): SimAircraft[] {
+// so the map never looks empty/broken. Spread worldwide, with a cluster near
+// the Gulf so the DXB / DWC filters have traffic to show.
+function useSimulatedFleet(count: number): MapAircraft[] {
   return useMemo(() => {
     let seed = 42
     const rand = () => {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff
       return (seed / 0x7fffffff) % 1
     }
-    return Array.from({ length: count }, () => ({
-      lng: 20 + rand() * 55,
-      lat: 5 + rand() * 33,
-      heading: rand() * 360,
-      icon: allPlaneIcons[Math.floor(rand() * allPlaneIcons.length)],
-      size: 18 + rand() * 8,
-    }))
+    return Array.from({ length: count }, (_, i) => {
+      const gulf = i % 6 === 0
+      const nearHub = i % 6 === 1
+      const verticalRate = (rand() - 0.5) * 12
+      return {
+        id: `sim-${i}`,
+        callsign: `EK${100 + i}`,
+        lng: nearHub ? 53 + rand() * 5 : gulf ? 45 + rand() * 25 : -170 + rand() * 340,
+        lat: nearHub ? 23 + rand() * 4 : gulf ? 15 + rand() * 17 : -45 + rand() * 110,
+        heading: rand() * 360,
+        altitude: 9000 + rand() * 3000,
+        onGround: false,
+        verticalRate,
+        icon: allPlaneIcons[Math.floor(rand() * allPlaneIcons.length)],
+        size: 18 + rand() * 8,
+      }
+    })
   }, [count])
 }
 
@@ -178,13 +201,20 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     setSelectedAirportIcao,
     showEmiratesLayer,
     pinnedCallsigns,
+    airportFilter,
+    typeFilter,
+    statusFilter,
+    flowFilter,
+    hourFilter,
+    hourMode,
+    setHourlyCounts,
   } = useMapSelection()
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
-  const { aircraft: emiratesFleet } = useLiveFleet({
-    emiratesOnly: true,
-    enabled: showEmiratesLayer,
-  })
-  const simulatedFleet = useSimulatedFleet(70)
+  const emiratesFleet = useMemo(
+    () => liveFleet.filter((a) => a.callsign.toUpperCase().startsWith('UAE')),
+    [liveFleet],
+  )
+  const simulatedFleet = useSimulatedFleet(400)
   const mapRef = useRef<MapRef>(null)
   const radarTileUrl = useRainRadar()
 
@@ -195,6 +225,90 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   }))
 
   const showLive = status === 'live' && liveFleet.length > 0
+
+  const [bounds, setBounds] = useState<[number, number, number, number] | null>(null)
+  const updateBounds = () => {
+    const b = mapRef.current?.getBounds()
+    if (b) setBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()])
+  }
+
+  const fleet: MapAircraft[] = useMemo(
+    () =>
+      showLive
+        ? liveFleet
+            .filter((a) => !(showEmiratesLayer && a.callsign.toUpperCase().startsWith('UAE')))
+            .map((a) => ({
+              ...a,
+              live: a,
+              icon: aircraftIcon(a.onGround, a.verticalRate),
+              size: 20,
+            }))
+        : simulatedFleet,
+    [showLive, liveFleet, simulatedFleet, showEmiratesLayer],
+  )
+
+  const hub: [number, number] = [DXB.lng, DXB.lat]
+  const filteredExceptHour = useMemo(() => {
+    const airport = airportFilter === 'DXB' ? DXB : airportFilter === 'DWC' ? DWC : null
+    return fleet.filter((a) => {
+      const here: [number, number] = [a.lng, a.lat]
+      if (airport && distanceKm(here, [airport.lng, airport.lat]) > NEAR_AIRPORT_KM) return false
+      const attrs = flightAttrs(a.id, a.onGround, a.verticalRate)
+      if (typeFilter.length && !typeFilter.includes(attrs.type)) return false
+      if (statusFilter.length && !statusFilter.includes(attrs.status)) return false
+      if (flowFilter) {
+        if (distanceKm(here, hub) > FLOW_RADIUS_KM) return false
+        if (flowDirection(a, hub) !== flowFilter) return false
+      }
+      return true
+    })
+  }, [fleet, airportFilter, typeFilter, statusFilter, flowFilter])
+
+  const hourlyCounts = useMemo(() => {
+    const counts = { departure: Array(24).fill(0), arrival: Array(24).fill(0) }
+    for (const a of filteredExceptHour) {
+      const { hour } = flightAttrs(a.id, a.onGround, a.verticalRate)
+      counts[flowDirection(a, hub)][hour]++
+    }
+    return counts
+  }, [filteredExceptHour])
+  useEffect(() => setHourlyCounts(hourlyCounts), [hourlyCounts, setHourlyCounts])
+
+  const visibleFleet = useMemo(() => {
+    const inHour = (a: MapAircraft) => {
+      if (hourFilter == null) return true
+      if (flightAttrs(a.id, a.onGround, a.verticalRate).hour !== hourFilter) return false
+      return hourMode === 'both' || flowDirection(a, hub) === hourMode
+    }
+    const inView = (a: MapAircraft) =>
+      !bounds ||
+      (a.lat >= bounds[1] - 2 &&
+        a.lat <= bounds[3] + 2 &&
+        (bounds[2] - bounds[0] >= 340 || (a.lng >= bounds[0] - 2 && a.lng <= bounds[2] + 2)))
+    return filteredExceptHour.filter((a) => inHour(a) && inView(a)).slice(0, MAX_VISIBLE_AIRCRAFT)
+  }, [filteredExceptHour, hourFilter, hourMode, bounds])
+
+  const firstFlyRef = useRef(true)
+  useEffect(() => {
+    if (firstFlyRef.current) {
+      firstFlyRef.current = false
+      return
+    }
+    const target = airportFilter === 'DXB' ? DXB : airportFilter === 'DWC' ? DWC : null
+    mapRef.current?.flyTo(
+      target
+        ? { center: [target.lng, target.lat], zoom: 6, duration: 1200 }
+        : {
+            center: [WORLD_VIEW.longitude, WORLD_VIEW.latitude],
+            zoom: WORLD_VIEW.zoom,
+            duration: 1200,
+          },
+    )
+  }, [airportFilter])
+
+  useEffect(() => {
+    if (flowFilter) mapRef.current?.flyTo({ center: [DXB.lng, DXB.lat], zoom: 5, duration: 1200 })
+  }, [flowFilter])
 
   const routeGeoJson = useMemo(() => {
     if (!selectedFlight?.position) return null
@@ -261,10 +375,12 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     <div className="relative h-full w-full overflow-hidden bg-bg-secondary">
       <Map
         ref={mapRef}
-        initialViewState={{ longitude: 48, latitude: 20, zoom: INITIAL_ZOOM }}
+        initialViewState={WORLD_VIEW}
         mapStyle={mapStyles[mapType]}
         attributionControl={false}
         style={{ width: '100%', height: '100%' }}
+        onLoad={updateBounds}
+        onMoveEnd={updateBounds}
         onZoom={(e) => onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))}
       >
         {(showAllFirLayers || selectedFirId) && (
@@ -397,49 +513,26 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           </Source>
         )}
 
-        {showLive
-          ? liveFleet
-              .filter((a) => !(showEmiratesLayer && a.callsign.toUpperCase().startsWith('UAE')))
-              .map((a) => (
-                <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
-                  <button
-                    type="button"
-                    title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
-                    onClick={() =>
-                      setSelectedFlight({
-                        callsign: a.callsign,
-                        altitude: a.altitude,
-                        live: a,
-                        position: { lng: a.lng, lat: a.lat, heading: a.heading },
-                      })
-                    }
-                    className="cursor-pointer border-0 bg-transparent p-0"
-                  >
-                    <PlaneMarker
-                      icon={aircraftIcon(a.onGround, a.verticalRate)}
-                      heading={a.heading}
-                    />
-                  </button>
-                </Marker>
-              ))
-          : simulatedFleet.map((a, i) => (
-              <Marker key={i} longitude={a.lng} latitude={a.lat}>
-                <button
-                  type="button"
-                  title={`EK${100 + i}`}
-                  onClick={() =>
-                    setSelectedFlight({
-                      callsign: `EK${100 + i}`,
-                      altitude: null,
-                      position: { lng: a.lng, lat: a.lat, heading: a.heading },
-                    })
-                  }
-                  className="cursor-pointer border-0 bg-transparent p-0"
-                >
-                  <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
-                </button>
-              </Marker>
-            ))}
+        {visibleFleet.map((a) => (
+          <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
+            <button
+              type="button"
+              title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
+              onClick={() =>
+                setSelectedFlight({
+                  callsign: a.callsign,
+                  altitude: a.altitude,
+                  live: a.live,
+                  position: { lng: a.lng, lat: a.lat, heading: a.heading },
+                })
+              }
+              className="cursor-pointer border-0 bg-transparent p-0"
+            >
+              <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
+            </button>
+          </Marker>
+        ))}
+
         {showEmiratesLayer &&
           emiratesFleet.map((a) => {
             const stale = isStale(a.positionTime)
