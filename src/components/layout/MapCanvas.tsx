@@ -6,6 +6,7 @@ import { config as maplibreConfig } from 'maplibre-gl'
 // prod). Importing the worker file explicitly with `?worker&url` makes Vite
 // emit it as its own real asset with a correct, base-path-aware URL.
 import MaplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+import { Building2 } from 'lucide-react'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 import Map, { Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre'
 import planeBlueSolid from '../../assets/icons/plane-blue-solid.png'
@@ -20,6 +21,7 @@ import firBoundaries from '../../data/firBoundaries.geojson?url'
 import { firRegions } from '../../data/firRegions'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
 import { useRainRadar } from '../../hooks/useRainRadar'
+import { Tooltip } from '../ui/Tooltip'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
 
@@ -278,31 +280,25 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             const active = selectedAirportIcao === a.icao
             return (
               <Marker key={a.icao} longitude={a.lng} latitude={a.lat}>
-                <button
-                  type="button"
-                  title={`${a.icao} · ${a.name}`}
-                  onClick={() => setSelectedAirportIcao(active ? null : a.icao)}
-                  className="flex cursor-pointer flex-col items-center gap-0.5 border-0 bg-transparent p-0"
-                >
-                  <div
-                    className={`rounded-full border-2 border-white shadow-sm ${
+                <Tooltip label={`${a.icao}${a.iata ? ` · ${a.iata}` : ''} — ${a.name}`}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAirportIcao(active ? null : a.icao)}
+                    className={`flex cursor-pointer items-center justify-center rounded-full border-2 border-white shadow-sm transition-colors ${
                       active
-                        ? 'size-3.5 bg-fg-red'
+                        ? 'size-6 bg-fg-red'
                         : a.size === 'large'
-                          ? 'size-2.5 bg-fg-secondary'
-                          : 'size-2 bg-fg-grey-blue'
+                          ? 'size-5 bg-fg-secondary'
+                          : 'size-4 bg-fg-grey-blue'
                     }`}
-                  />
-                  {(active || a.size === 'large') && (
-                    <span
-                      className={`rounded px-1 py-0.5 text-[9px] font-semibold whitespace-nowrap text-white ${
-                        active ? 'bg-fg-red' : 'bg-fg-secondary/90'
-                      }`}
-                    >
-                      {a.icao}
-                    </span>
-                  )}
-                </button>
+                  >
+                    <Building2
+                      size={a.size === 'large' ? 12 : 9}
+                      className="text-white"
+                      strokeWidth={2.5}
+                    />
+                  </button>
+                </Tooltip>
               </Marker>
             )
           })}
