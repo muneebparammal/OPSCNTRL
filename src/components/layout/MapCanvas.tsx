@@ -9,12 +9,6 @@ import MaplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Building2 } from 'lucide-react'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState, useRef } from 'react'
 import Map, { Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre'
-import planeBlueSolid from '../../assets/icons/plane-blue-solid.png'
-import planeBlueOutline from '../../assets/icons/plane-blue-outline.png'
-import planeYellowSolid from '../../assets/icons/plane-yellow-solid.png'
-import planeYellowBold from '../../assets/icons/plane-yellow-bold.png'
-import planeLightBluePattern from '../../assets/icons/plane-lightblue-pattern.png'
-import planeLightBlueOutline from '../../assets/icons/plane-lightblue-outline.png'
 import { useMapSelection } from '../../context/MapSelectionContext'
 import { airports } from '../../data/airports'
 import firBoundaries from '../../data/firBoundaries.geojson?url'
@@ -23,6 +17,7 @@ import { distanceKm, estimateRoute, flowDirection } from './routeGeometry'
 import { flightAttrs } from '../../data/flightAttributes'
 import { type LiveAircraft, useLiveFleet } from '../../hooks/useLiveFleet'
 import { useRainRadar } from '../../hooks/useRainRadar'
+import { AircraftIcon, FLOW_COLORS, type FlowKind } from './AircraftIcon'
 import { Tooltip } from '../ui/Tooltip'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
@@ -60,36 +55,6 @@ const mapStyles: Record<MapStyleId, string | ReturnType<typeof rasterStyle>> = {
   ),
 }
 
-const allPlaneIcons = [
-  planeBlueSolid,
-  planeBlueOutline,
-  planeYellowSolid,
-  planeYellowBold,
-  planeLightBluePattern,
-  planeLightBlueOutline,
-]
-
-function PlaneMarker({
-  icon,
-  heading,
-  size = 20,
-}: {
-  icon: string
-  heading: number
-  size?: number
-}) {
-  return (
-    <img
-      src={icon}
-      alt=""
-      width={size}
-      height={size}
-      style={{ transform: `rotate(${heading}deg)`, display: 'block' }}
-      draggable={false}
-    />
-  )
-}
-
 type MapAircraft = {
   id: string
   callsign: string
@@ -100,8 +65,6 @@ type MapAircraft = {
   onGround: boolean
   verticalRate: number | null
   live?: LiveAircraft
-  icon: string
-  size: number
 }
 
 // Fallback traffic shown while the live feed is connecting or unreachable,
@@ -127,8 +90,6 @@ function useSimulatedFleet(count: number): MapAircraft[] {
         altitude: 9000 + rand() * 3000,
         onGround: false,
         verticalRate,
-        icon: allPlaneIcons[Math.floor(rand() * allPlaneIcons.length)],
-        size: 18 + rand() * 8,
       }
     })
   }, [count])
@@ -167,11 +128,19 @@ function isStale(positionTime: number | null) {
   return positionTime == null || Date.now() / 1000 - positionTime > 120
 }
 
-function aircraftIcon(onGround: boolean, verticalRate: number | null) {
-  if (onGround) return planeLightBlueOutline
-  if (verticalRate != null && verticalRate > 1) return planeBlueSolid
-  if (verticalRate != null && verticalRate < -1) return planeYellowSolid
-  return planeLightBluePattern
+function Ripple({ color }: { color: string }) {
+  return (
+    <>
+      <span
+        className="pointer-events-none absolute size-12 animate-ping rounded-full opacity-40"
+        style={{ background: color }}
+      />
+      <span
+        className="pointer-events-none absolute size-9 rounded-full opacity-25"
+        style={{ background: color }}
+      />
+    </>
+  )
 }
 
 export type MapCanvasHandle = {
@@ -237,17 +206,17 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
       showLive
         ? liveFleet
             .filter((a) => !(showEmiratesLayer && a.callsign.toUpperCase().startsWith('UAE')))
-            .map((a) => ({
-              ...a,
-              live: a,
-              icon: aircraftIcon(a.onGround, a.verticalRate),
-              size: 20,
-            }))
+            .map((a) => ({ ...a, live: a }))
         : simulatedFleet,
     [showLive, liveFleet, simulatedFleet, showEmiratesLayer],
   )
 
   const hub: [number, number] = [DXB.lng, DXB.lat]
+  const kindOf = (a: { lng: number; lat: number; heading: number; onGround: boolean }): FlowKind =>
+    a.onGround ? 'ground' : flowDirection(a, hub)
+  const kindColor = (a: Parameters<typeof kindOf>[0]) => FLOW_COLORS[kindOf(a)]
+  const isFourEngine = (a: { id: string; onGround: boolean; verticalRate: number | null }) =>
+    flightAttrs(a.id, a.onGround, a.verticalRate).type === 'A380'
   const filteredExceptHour = useMemo(() => {
     const airport = airportFilter === 'DXB' ? DXB : airportFilter === 'DWC' ? DWC : null
     return fleet.filter((a) => {
@@ -515,21 +484,24 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
 
         {visibleFleet.map((a) => (
           <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
-            <button
-              type="button"
-              title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
-              onClick={() =>
-                setSelectedFlight({
-                  callsign: a.callsign,
-                  altitude: a.altitude,
-                  live: a.live,
-                  position: { lng: a.lng, lat: a.lat, heading: a.heading },
-                })
-              }
-              className="cursor-pointer border-0 bg-transparent p-0"
-            >
-              <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
-            </button>
+            <div className="relative flex items-center justify-center">
+              {selectedFlight?.callsign === a.callsign && <Ripple color={kindColor(a)} />}
+              <button
+                type="button"
+                title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
+                onClick={() =>
+                  setSelectedFlight({
+                    callsign: a.callsign,
+                    altitude: a.altitude,
+                    live: a.live,
+                    position: { lng: a.lng, lat: a.lat, heading: a.heading },
+                  })
+                }
+                className="relative cursor-pointer border-0 bg-transparent p-0"
+              >
+                <AircraftIcon kind={kindOf(a)} fourEngine={isFourEngine(a)} heading={a.heading} />
+              </button>
+            </div>
           </Marker>
         ))}
 
@@ -554,7 +526,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                       pinned ? 'bg-brand-ek/25 ring-2 ring-brand-ek' : 'bg-transparent'
                     } ${stale ? 'opacity-40 grayscale' : ''}`}
                   >
-                    <PlaneMarker icon={planeYellowBold} heading={a.heading} size={24} />
+                    <AircraftIcon
+                      kind={kindOf(a)}
+                      fourEngine={isFourEngine(a)}
+                      heading={a.heading}
+                    />
                   </button>
                 </Tooltip>
               </Marker>
@@ -563,14 +539,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
       </Map>
 
       {showEmiratesLayer && (
-        <div className="absolute bottom-16 left-6 z-10 flex flex-col gap-1.5 rounded-xl bg-bg-primary/90 px-3 py-2 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
+        <div className="absolute bottom-[150px] left-6 z-10 flex flex-col gap-1.5 rounded-xl bg-bg-primary/90 px-3 py-2 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
           <p className="text-fg-muted">Emirates Tracker · {emiratesFleet.length} flights</p>
           <span className="flex items-center gap-2">
-            <img src={planeYellowBold} alt="" className="size-4" />
+            <span className="size-4 rounded-full bg-brand-ek" />
             Emirates flight (UAE)
           </span>
           <span className="flex items-center gap-2">
-            <img src={planeYellowBold} alt="" className="size-4 opacity-40 grayscale" />
+            <span className="size-4 rounded-full bg-fg-muted/40" />
             Stale position (&gt; 2 min)
           </span>
           <span className="flex items-center gap-2">
@@ -580,10 +556,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         </div>
       )}
 
-      {/* Dims the basemap so markers, FIR highlights, and other overlays read
-          clearly on top — matches the dark alpha treatment from the original
-          design. pointer-events-none so it never blocks map interaction. */}
-      <div className="pointer-events-none absolute inset-0 bg-black/15" />
+      <div className="absolute bottom-16 left-6 z-10 flex flex-col gap-1.5 rounded-xl bg-bg-primary/90 px-3 py-2 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
+        {(['departure', 'arrival', 'ground'] as FlowKind[]).map((k) => (
+          <span key={k} className="flex items-center gap-2 capitalize">
+            <span className="size-3 rounded-full" style={{ background: FLOW_COLORS[k] }} />
+            {k}
+          </span>
+        ))}
+      </div>
 
       <div className="absolute bottom-6 left-6 z-10 flex items-center gap-1.5 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
         <span
