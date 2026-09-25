@@ -14,11 +14,14 @@ for (const [path, raw] of Object.entries(files)) {
   sources[name] = raw.replace(NEUTRAL_STROKES, '$1="currentColor"')
 }
 
-export type IconProps = { size?: number; className?: string; style?: CSSProperties }
+export type IconProps = { size?: number; className?: string; style?: CSSProperties; mono?: boolean }
 export type IconComponent = ComponentType<IconProps>
 
-export function Icon({ name, size = 16, className = '', style }: IconProps & { name: string }) {
-  const svg = (sources[name] ?? '').replace(
+export function Icon({ name, size = 16, className = '', style, mono }: IconProps & { name: string }) {
+  const source = mono
+    ? (sources[name] ?? '').replace(/(stroke|fill)="#[0-9a-f]{6}"/gi, '$1="currentColor"')
+    : (sources[name] ?? '')
+  const svg = source.replace(
     /^<svg([^>]*?)\swidth="[^"]*"\sheight="[^"]*"/,
     `<svg$1 width="${size}" height="${size}"`,
   )
@@ -33,8 +36,8 @@ export function Icon({ name, size = 16, className = '', style }: IconProps & { n
 }
 
 const cache: Record<string, IconComponent> = {}
-export function figmaIcon(name: string): IconComponent {
-  return (cache[name] ??= (props) => <Icon name={name} {...props} />)
+export function figmaIcon(name: string, mono = false): IconComponent {
+  return (cache[`${name}:${mono}`] ??= (props) => <Icon name={name} mono={mono} {...props} />)
 }
 
 export const icons = {
@@ -58,8 +61,8 @@ export const icons = {
   playback: figmaIcon('clock-rewind'),
   weather: figmaIcon('cloud-sun-02'),
   weatherLarge: figmaIcon('cloud-sun-3'),
-  takeoff: figmaIcon('splane-takeoff-01'),
-  landing: figmaIcon('splane-landing-01'),
+  takeoff: figmaIcon('splane-takeoff-01', true),
+  landing: figmaIcon('splane-landing-01', true),
   plane: figmaIcon('plane'),
   clock: figmaIcon('clock'),
   clockCheck: figmaIcon('clock-check'),
