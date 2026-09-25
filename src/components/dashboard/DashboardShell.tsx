@@ -1,5 +1,8 @@
 import { type ReactNode, useRef, useState } from 'react'
 import { MapSelectionProvider, useMapSelection } from '../../context/MapSelectionContext'
+import { airports } from '../../data/airports'
+import { AirportDetailHeader } from './AirportDetailHeader'
+import { AirportStatsCards } from './AirportStatsCards'
 import { ConnectingPassengersCard } from './ConnectingPassengersCard'
 import { FlightDetailHeader } from './FlightDetailHeader'
 import { FlightTimesCard } from './FlightTimesCard'
@@ -46,15 +49,19 @@ function DashboardShellInner({
   const [mapType, setMapType] = useState<MapStyleId>('light')
   const [zoomPercent, setZoomPercent] = useState(100)
   const mapRef = useRef<MapCanvasHandle>(null)
-  const { selectedFlight, setSelectedFlight } = useMapSelection()
+  const { selectedFlight, setSelectedFlight, selectedAirportIcao, setSelectedAirportIcao } =
+    useMapSelection()
+  const selectedAirport = airports.find((a) => a.icao === selectedAirportIcao) ?? null
 
   const closeSheet = () => {
     setSheetOpen(false)
     setSelectedFlight(null)
+    setSelectedAirportIcao(null)
   }
 
-  // Clicking an aircraft on the map overrides whatever this screen's own
-  // sheet content is with that flight's detail view, and opens the panel.
+  // Clicking an aircraft or an airport on the map overrides whatever this
+  // screen's own sheet content is with that item's detail view, and opens
+  // the panel. Flight selection takes priority if somehow both are set.
   const activeSheetContent = selectedFlight ? (
     <>
       <FlightInfoCard defaultOpen />
@@ -63,18 +70,22 @@ function DashboardShellInner({
       <ConnectingPassengersCard />
       <CrewComplementCard />
     </>
+  ) : selectedAirport ? (
+    <AirportStatsCards airport={selectedAirport} />
   ) : (
     sheetContent
   )
   const activeSheetTitle = selectedFlight ? (
     <FlightDetailHeader onClose={closeSheet} flightNumber={selectedFlight.callsign} />
+  ) : selectedAirport ? (
+    <AirportDetailHeader airport={selectedAirport} onClose={closeSheet} />
   ) : typeof sheetTitle === 'function' ? (
     sheetTitle(closeSheet)
   ) : (
     sheetTitle
   )
-  const activeHideSheetClose = selectedFlight ? true : hideSheetClose
-  const isSheetOpen = sheetOpen || Boolean(selectedFlight)
+  const activeHideSheetClose = selectedFlight || selectedAirport ? true : hideSheetClose
+  const isSheetOpen = sheetOpen || Boolean(selectedFlight) || Boolean(selectedAirport)
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
@@ -97,7 +108,9 @@ function DashboardShellInner({
               narrow={isSheetOpen}
               mapTypeDefaultOpen={mapTypeDefaultOpen}
               detailPanelActive={isSheetOpen}
-              onToggleDetailPanel={() => (selectedFlight ? closeSheet() : setSheetOpen((v) => !v))}
+              onToggleDetailPanel={() =>
+                selectedFlight || selectedAirport ? closeSheet() : setSheetOpen((v) => !v)
+              }
               mapType={mapType}
               onMapTypeChange={setMapType}
             />
@@ -118,7 +131,9 @@ function DashboardShellInner({
               isSheetOpen ? 'left-[calc(50%-220px)]' : 'left-1/2'
             } -translate-x-1/2`}
             airspaceActive={isSheetOpen}
-            onAirspaceClick={() => (selectedFlight ? closeSheet() : setSheetOpen((v) => !v))}
+            onAirspaceClick={() =>
+              selectedFlight || selectedAirport ? closeSheet() : setSheetOpen((v) => !v)
+            }
           />
 
           {activeSheetContent && (

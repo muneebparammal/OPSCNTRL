@@ -20,6 +20,10 @@ type MapSelectionContextValue = {
   setAirportFilter: (airport: AirportFilter) => void
   selectedFlight: SelectedFlight | null
   setSelectedFlight: (flight: SelectedFlight | null) => void
+  showAirportsLayer: boolean
+  setShowAirportsLayer: (show: boolean) => void
+  selectedAirportIcao: string | null
+  setSelectedAirportIcao: (icao: string | null) => void
 }
 
 const MapSelectionContext = createContext<MapSelectionContextValue | null>(null)
@@ -31,6 +35,8 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
   const [showWeather, setShowWeather] = useState(false)
   const [airportFilter, setAirportFilter] = useState<AirportFilter>('ALL')
   const [selectedFlight, setSelectedFlight] = useState<SelectedFlight | null>(null)
+  const [showAirportsLayer, setShowAirportsLayer] = useState(false)
+  const [selectedAirportIcao, setSelectedAirportIcao] = useState<string | null>(null)
   return (
     <MapSelectionContext.Provider
       value={{
@@ -46,6 +52,10 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
         setAirportFilter,
         selectedFlight,
         setSelectedFlight,
+        showAirportsLayer,
+        setShowAirportsLayer,
+        selectedAirportIcao,
+        setSelectedAirportIcao,
       }}
     >
       {children}

@@ -15,6 +15,7 @@ import planeYellowBold from '../../assets/icons/plane-yellow-bold.png'
 import planeLightBluePattern from '../../assets/icons/plane-lightblue-pattern.png'
 import planeLightBlueOutline from '../../assets/icons/plane-lightblue-outline.png'
 import { useMapSelection } from '../../context/MapSelectionContext'
+import { airports } from '../../data/airports'
 import firBoundaries from '../../data/firBoundaries.geojson?url'
 import { firRegions } from '../../data/firRegions'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
@@ -161,8 +162,16 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
   const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
-  const { selectedFirId, showAllFirLayers, showDxbRing, showWeather, setSelectedFlight } =
-    useMapSelection()
+  const {
+    selectedFirId,
+    showAllFirLayers,
+    showDxbRing,
+    showWeather,
+    setSelectedFlight,
+    showAirportsLayer,
+    selectedAirportIcao,
+    setSelectedAirportIcao,
+  } = useMapSelection()
   const radarTileUrl = useRainRadar()
 
   useImperativeHandle(ref, () => ({
@@ -263,6 +272,40 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             </div>
           </Marker>
         )}
+
+        {showAirportsLayer &&
+          airports.map((a) => {
+            const active = selectedAirportIcao === a.icao
+            return (
+              <Marker key={a.icao} longitude={a.lng} latitude={a.lat}>
+                <button
+                  type="button"
+                  title={`${a.icao} · ${a.name}`}
+                  onClick={() => setSelectedAirportIcao(active ? null : a.icao)}
+                  className="flex cursor-pointer flex-col items-center gap-0.5 border-0 bg-transparent p-0"
+                >
+                  <div
+                    className={`rounded-full border-2 border-white shadow-sm ${
+                      active
+                        ? 'size-3.5 bg-fg-red'
+                        : a.size === 'large'
+                          ? 'size-2.5 bg-fg-secondary'
+                          : 'size-2 bg-fg-grey-blue'
+                    }`}
+                  />
+                  {(active || a.size === 'large') && (
+                    <span
+                      className={`rounded px-1 py-0.5 text-[9px] font-semibold whitespace-nowrap text-white ${
+                        active ? 'bg-fg-red' : 'bg-fg-secondary/90'
+                      }`}
+                    >
+                      {a.icao}
+                    </span>
+                  )}
+                </button>
+              </Marker>
+            )
+          })}
 
         {showWeather && radarTileUrl && (
           <Source id="weather-radar" type="raster" tiles={[radarTileUrl]} tileSize={256}>

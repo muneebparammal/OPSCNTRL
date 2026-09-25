@@ -10,8 +10,9 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
   const { selectedFirId, setSelectedFirId, showAllFirLayers, setShowAllFirLayers } =
     useMapSelection()
 
-  const filtered = firRegions.filter((r) =>
-    r.name.toLowerCase().includes(query.trim().toLowerCase()),
+  const q = query.trim().toLowerCase()
+  const filtered = firRegions.filter(
+    (r) => r.name.toLowerCase().includes(q) || r.country.toLowerCase().includes(q),
   )
 
   return (
@@ -22,7 +23,7 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search FIR"
+          placeholder="Search FIR or country"
           className="w-full bg-transparent text-sm font-medium text-fg-secondary placeholder:text-fg-muted focus:outline-none"
         />
       </div>
@@ -50,7 +51,12 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
                   : 'bg-bg-muted text-fg-secondary hover:bg-bg-tertiary'
               }`}
             >
-              <p className="text-sm font-semibold">{r.name}</p>
+              <div className="flex flex-col">
+                <p className="text-sm font-semibold">{r.name}</p>
+                <p className={`text-xs ${active ? 'text-white/70' : 'text-fg-muted'}`}>
+                  {r.country}
+                </p>
+              </div>
               <p className={`text-sm ${active ? 'text-white/80' : 'text-fg-muted'}`}>
                 {r.count} flights
               </p>

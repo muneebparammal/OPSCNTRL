@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMapSelection } from '../../context/MapSelectionContext'
 import type { MapStyleId } from '../layout/MapCanvas'
 import { Switch } from './Switch'
 
@@ -31,12 +32,22 @@ type MapTypeDropdownProps = {
 }
 
 export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownProps) {
+  const { showAirportsLayer, setShowAirportsLayer } = useMapSelection()
   const [overlayState, setOverlayState] = useState<Record<string, boolean>>({
     'NOTAMs': false,
-    'Airport': false,
     'Airspace': false,
     'Country Name': true,
   })
+
+  const isChecked = (label: string) =>
+    label === 'Airport' ? showAirportsLayer : overlayState[label]
+  const handleChange = (label: string, value: boolean) => {
+    if (label === 'Airport') {
+      setShowAirportsLayer(value)
+    } else {
+      setOverlayState((s) => ({ ...s, [label]: value }))
+    }
+  }
 
   return (
     <div className="w-56 overflow-hidden rounded-xl border border-border-primary bg-bg-popover py-1 shadow-popover">
@@ -50,8 +61,8 @@ export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownPro
             <div className="flex h-[30px] w-full items-center gap-2 rounded-lg px-2 py-[5px]">
               <p className="flex-1 text-sm font-medium text-fg-primary">{label}</p>
               <Switch
-                checked={overlayState[label]}
-                onChange={(v) => setOverlayState((s) => ({ ...s, [label]: v }))}
+                checked={isChecked(label)}
+                onChange={(v) => handleChange(label, v)}
                 label={label}
               />
             </div>
