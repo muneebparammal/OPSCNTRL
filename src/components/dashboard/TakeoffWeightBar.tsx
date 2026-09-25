@@ -15,7 +15,7 @@ export function TakeoffWeightBar({ towAct, towEst, mtow, num, unit }: Props) {
   return (
     <div className="flex w-full flex-col gap-2 border-t border-border-primary pt-3">
       <p className="text-xs font-extrabold tracking-wide text-fg-muted uppercase">
-        Take-off weight
+        TOW · Take-off weight
       </p>
       <div className="flex items-end justify-between">
         <p className="text-xl leading-6 font-bold text-fg-primary">
