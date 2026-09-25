@@ -1,6 +1,6 @@
 import { Fuel } from 'lucide-react'
 import { useState } from 'react'
-import { getFuelStatus, type FuelStatus } from '../../data/fuelStatus'
+import { getFuelStatus } from '../../data/fuelStatus'
 import { Chip } from '../ui/Badge'
 import { CollapsibleCard } from '../ui/Card'
 import { displayCallsign } from '../ui/FlightTooltip'
@@ -112,49 +112,6 @@ function Gauge({ percent, empty }: { percent: number; empty: boolean }) {
   )
 }
 
-function Stepper({ f }: { f: FuelStatus }) {
-  const steps = [
-    { label: 'Planned', done: f.plannedFuel > 0 },
-    { label: 'Fuelled', done: f.fuelDepartActual > 0 },
-    { label: 'En route', done: f.fuelOnBoard > 0 },
-    { label: 'Landed', done: f.fuelArriveActual > 0 },
-  ]
-  return (
-    <div className="flex w-full items-start">
-      {steps.map((s, i) => (
-        <div key={s.label} className="flex flex-1 flex-col items-center gap-1">
-          <div className="flex w-full items-center">
-            <div
-              className={`h-0.5 flex-1 ${i === 0 ? 'opacity-0' : s.done ? 'bg-fg-green' : 'bg-bg-tertiary'}`}
-            />
-            <div
-              className={`flex size-4 items-center justify-center rounded-full border-2 ${
-                s.done ? 'border-fg-green bg-fg-green' : 'border-bg-tertiary bg-bg-primary'
-              }`}
-            >
-              {s.done && <span className="size-1.5 rounded-full bg-white" />}
-            </div>
-            <div
-              className={`h-0.5 flex-1 ${
-                i === steps.length - 1
-                  ? 'opacity-0'
-                  : steps[i + 1].done
-                    ? 'bg-fg-green'
-                    : 'bg-bg-tertiary'
-              }`}
-            />
-          </div>
-          <p
-            className={`text-[11px] font-semibold ${s.done ? 'text-fg-primary' : 'text-fg-muted'}`}
-          >
-            {s.label}
-          </p>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function Delta({ actual, planned }: { actual: number; planned: number }) {
   if (!planned || !actual) return null
   const d = ((actual - planned) / planned) * 100
@@ -201,7 +158,6 @@ export function FuelStatusCard({
 
   const remaining = f.fuelDepartActual ? f.fuelOnBoard / f.fuelDepartActual : 0
   const burned = f.fuelDepartActual ? f.fuelDepartActual - f.fuelOnBoard : 0
-  const maxWeight = Math.max(f.towEstimate, f.towActual, 1)
 
   return (
     <CollapsibleCard icon={Fuel} title="Fuel Status" defaultOpen={defaultOpen}>
@@ -227,8 +183,6 @@ export function FuelStatusCard({
           ))}
         </div>
       </div>
-
-      <Stepper f={f} />
 
       <div className="flex w-full flex-col gap-2 rounded-xl bg-bg-muted px-3 pt-4 pb-3">
         <Gauge percent={remaining} empty={pending || !f.fuelDepartActual} />
@@ -258,24 +212,6 @@ export function FuelStatusCard({
       </div>
 
       <div className="flex w-full flex-col gap-2">
-        <div className="flex h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
-          <div
-            className="h-full bg-fg-grey-blue-chart"
-            style={{ width: `${(f.zfwActual / maxWeight) * 100}%` }}
-          />
-          <div
-            className="h-full bg-fg-blue"
-            style={{ width: `${(f.fuelDepartActual / maxWeight) * 100}%` }}
-          />
-        </div>
-        <div className="flex gap-3 text-[11px] font-semibold text-fg-muted">
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-fg-grey-blue-chart" /> Zero fuel
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-fg-blue" /> Fuel
-          </span>
-        </div>
         <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 px-1 text-sm">
           <span />
           <span className="text-right text-[11px] font-extrabold text-fg-muted">EST</span>
