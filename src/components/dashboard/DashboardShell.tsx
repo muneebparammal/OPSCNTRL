@@ -3,7 +3,6 @@ import { MapSelectionProvider, useMapSelection } from '../../context/MapSelectio
 import { airports } from '../../data/airports'
 import { AirportDetailHeader } from './AirportDetailHeader'
 import { AirportStatsCards } from './AirportStatsCards'
-import { ConnectingPassengersCard } from './ConnectingPassengersCard'
 import { FlightDetailHeader } from './FlightDetailHeader'
 import { FlightTimesCard } from './FlightTimesCard'
 import { CrewComplementCard } from './HubCrewCards'
@@ -67,7 +66,6 @@ function DashboardShellInner({
       <FlightInfoCard defaultOpen />
       <FlightTimesCard />
       <PassengersCard />
-      <ConnectingPassengersCard />
       <CrewComplementCard />
     </>
   ) : selectedAirport ? (

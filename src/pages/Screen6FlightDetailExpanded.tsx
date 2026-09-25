@@ -1,4 +1,3 @@
-import { ConnectingPassengersCard } from '../components/dashboard/ConnectingPassengersCard'
 import { DashboardShell } from '../components/dashboard/DashboardShell'
 import { FlightDetailHeader } from '../components/dashboard/FlightDetailHeader'
 import { FlightTimesCard } from '../components/dashboard/FlightTimesCard'
@@ -17,7 +16,6 @@ export default function Screen6FlightDetailExpanded() {
           <FlightInfoCard defaultOpen />
           <FlightTimesCard defaultOpen />
           <PassengersCard defaultOpen />
-          <ConnectingPassengersCard defaultOpen />
           <CrewComplementCard />
         </>
       }
