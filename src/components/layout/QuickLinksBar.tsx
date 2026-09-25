@@ -53,7 +53,7 @@ export function QuickLinksBar({
   const [departureActive, setDepartureActive] = useState(false)
   const [arrivalActive, setArrivalActive] = useState(false)
 
-  const airportSuffix = airportFilter === 'ALL' ? '' : ` · ${airportFilter}`
+  const airport = airportFilter === 'ALL' ? 'DXB' : airportFilter
 
   return (
     <div className={`flex items-center justify-center gap-3 ${className}`}>
@@ -90,13 +90,13 @@ export function QuickLinksBar({
       />
       <QuickLinkButton
         icon={icons.takeoff}
-        label={`Departures${airportSuffix}`}
+        label={`Departure from ${airport}`}
         active={departureActive}
         onClick={() => setDepartureActive((v) => !v)}
       />
       <QuickLinkButton
         icon={icons.landing}
-        label={`Arrivals${airportSuffix}`}
+        label={`Arrival to ${airport}`}
         active={arrivalActive}
         onClick={() => setArrivalActive((v) => !v)}
       />
