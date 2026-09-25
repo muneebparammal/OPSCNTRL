@@ -7,41 +7,106 @@ import { displayCallsign } from '../ui/FlightTooltip'
 
 type Unit = 'KG' | 'LT'
 
+// Analogue cockpit-style fuel meter: E to F sweep with red/amber/green bands,
+// tick marks and a needle that animates to the current level.
+const CX = 100
+const CY = 100
+const R = 78
+
+function polar(p: number, r: number) {
+  const a = Math.PI * (1 - p)
+  return [CX + r * Math.cos(a), CY - r * Math.sin(a)] as const
+}
+
+function arc(p0: number, p1: number, r: number) {
+  const [x0, y0] = polar(p0, r)
+  const [x1, y1] = polar(p1, r)
+  return `M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y1}`
+}
+
+const BANDS = [
+  { from: 0, to: 0.25, color: 'var(--color-fg-red)' },
+  { from: 0.25, to: 0.5, color: '#f08c00' },
+  { from: 0.5, to: 1, color: 'var(--color-fg-green)' },
+]
+const LABELS: [number, string][] = [
+  [0, 'E'],
+  [0.25, '¼'],
+  [0.5, '½'],
+  [0.75, '¾'],
+  [1, 'F'],
+]
+
 function Gauge({ percent, empty }: { percent: number; empty: boolean }) {
-  const r = 42
-  const c = 2 * Math.PI * r
-  const p = Math.min(1, Math.max(0, percent))
-  const color = p < 0.25 ? 'var(--color-fg-red)' : p < 0.5 ? '#f08c00' : 'var(--color-fg-green)'
+  const p = Math.min(1, Math.max(0, empty ? 0 : percent))
+  const angle = -90 + p * 180
   return (
-    <div className="relative size-[112px] shrink-0">
-      <svg viewBox="0 0 100 100" className="size-full -rotate-90">
-        <circle
-          cx="50"
-          cy="50"
-          r={r}
-          fill="none"
-          stroke="var(--color-bg-tertiary)"
-          strokeWidth="9"
-        />
-        {!empty && (
-          <circle
-            cx="50"
-            cy="50"
-            r={r}
+    <div className="mx-auto flex w-full max-w-[240px] flex-col gap-1">
+      <svg viewBox="0 0 200 112" className="w-full">
+        {BANDS.map((b) => (
+          <path
+            key={b.from}
+            d={arc(b.from, b.to, R)}
             fill="none"
-            stroke={color}
-            strokeWidth="9"
-            strokeLinecap="round"
-            strokeDasharray={`${c * p} ${c}`}
-            style={{ transition: 'stroke-dasharray 500ms ease' }}
+            stroke={empty ? 'var(--color-bg-tertiary)' : b.color}
+            strokeWidth="10"
+            opacity={empty ? 1 : 0.9}
           />
-        )}
+        ))}
+        {Array.from({ length: 21 }, (_, k) => {
+          const t = k / 20
+          const major = k % 5 === 0
+          const [x0, y0] = polar(t, R - 8)
+          const [x1, y1] = polar(t, R - (major ? 17 : 13))
+          return (
+            <line
+              key={k}
+              x1={x0}
+              y1={y0}
+              x2={x1}
+              y2={y1}
+              stroke="var(--color-fg-muted)"
+              strokeWidth={major ? 2 : 1}
+              strokeLinecap="round"
+            />
+          )
+        })}
+        {LABELS.map(([t, label]) => {
+          const [x, y] = polar(t, R - 28)
+          return (
+            <text
+              key={label}
+              x={x}
+              y={y + 4}
+              textAnchor="middle"
+              fontSize="12"
+              fontWeight="700"
+              fill="var(--color-fg-secondary)"
+            >
+              {label}
+            </text>
+          )
+        })}
+        <g
+          style={{
+            transform: `rotate(${angle}deg)`,
+            transformOrigin: `${CX}px ${CY}px`,
+            transition: 'transform 700ms cubic-bezier(0.34, 1.3, 0.64, 1)',
+          }}
+        >
+          <polygon
+            points={`${CX - 3},${CY} ${CX + 3},${CY} ${CX},${CY - (R - 12)}`}
+            fill={empty ? 'var(--color-fg-muted)' : 'var(--color-brand-ek)'}
+          />
+        </g>
+        <circle cx={CX} cy={CY} r="7" fill="var(--color-fg-secondary)" />
+        <circle cx={CX} cy={CY} r="2.5" fill="var(--color-bg-primary)" />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="text-2xl leading-7 font-bold text-fg-primary">
+      <div className="flex items-center justify-center gap-1.5">
+        <Fuel size={14} className="text-fg-muted" />
+        <p className="text-xl leading-6 font-bold text-fg-primary">
           {empty ? '—' : `${Math.round(p * 100)}%`}
         </p>
-        <p className="text-[11px] font-semibold text-fg-muted">{empty ? 'no data' : 'remaining'}</p>
       </div>
     </div>
   )
@@ -165,11 +230,13 @@ export function FuelStatusCard({
 
       <Stepper f={f} />
 
-      <div className="flex w-full items-center gap-4 rounded-xl bg-bg-muted p-3">
+      <div className="flex w-full flex-col gap-2 rounded-xl bg-bg-muted px-3 pt-4 pb-3">
         <Gauge percent={remaining} empty={pending || !f.fuelDepartActual} />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-xs font-semibold text-fg-muted">On board</p>
-          <p className="text-2xl leading-7 font-bold text-fg-primary">{fmt(f.fuelOnBoard)}</p>
+        <div className="flex w-full items-end justify-between px-1">
+          <div>
+            <p className="text-xs font-semibold text-fg-muted">On board</p>
+            <p className="text-xl leading-6 font-bold text-fg-primary">{fmt(f.fuelOnBoard)}</p>
+          </div>
           <p className="text-xs text-fg-muted">Burned {fmt(burned)}</p>
         </div>
       </div>
