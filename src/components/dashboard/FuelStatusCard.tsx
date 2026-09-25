@@ -151,9 +151,11 @@ function StatCard({
 export function FuelStatusCard({
   callsign,
   defaultOpen = false,
+  full = false,
 }: {
   callsign: string
   defaultOpen?: boolean
+  full?: boolean
 }) {
   const f = getFuelStatus(displayCallsign(callsign))
   const [unit, setUnit] = useState<Unit>('KG')
@@ -167,7 +169,11 @@ export function FuelStatusCard({
   const burned = f.fuelDepartActual ? f.fuelDepartActual - f.fuelOnBoard : 0
 
   return (
-    <CollapsibleCard icon={Fuel} title="Fuel Status" defaultOpen={defaultOpen}>
+    <CollapsibleCard
+      icon={Fuel}
+      title={full ? 'Fuel Status · full data' : 'Fuel Status'}
+      defaultOpen={defaultOpen}
+    >
       <div className="flex items-center gap-2">
         <p className="text-sm font-bold text-fg-primary">
           {f.dep && f.arr ? `${f.dep} → ${f.arr}` : f.flight}
@@ -190,6 +196,15 @@ export function FuelStatusCard({
           ))}
         </div>
       </div>
+
+      {full && (
+        <div className="flex flex-wrap gap-1.5">
+          <Chip tone="grey-blue">Carrier {f.flight.slice(0, 2)}</Chip>
+          <Chip tone="grey-blue">Flight {f.flight.slice(2)}</Chip>
+          <Chip tone="grey-blue">Suffix –</Chip>
+          <Chip tone="grey-blue">Ref FS03</Chip>
+        </div>
+      )}
 
       <div className="flex w-full flex-col gap-2 rounded-xl bg-bg-muted px-3 pt-4 pb-3">
         <Gauge percent={remaining} empty={pending || !f.fuelDepartActual} />
@@ -218,6 +233,18 @@ export function FuelStatusCard({
         />
         <StatCard label="Planned burn" value={num(f.plannedBurn)} unit={unit} />
       </div>
+
+      {full && (
+        <div className="flex w-full gap-2">
+          <StatCard label="Arrived with" value={num(f.fuelArriveActual)} unit={unit} />
+          <StatCard
+            label="Zero-fuel weight"
+            value={num(f.zfwActual)}
+            unit={unit}
+            badge={<span className="text-[11px] text-fg-muted">est {num(f.zfwEstimate)}</span>}
+          />
+        </div>
+      )}
 
       <TakeoffWeightBar
         towAct={f.towActual}
