@@ -1,8 +1,9 @@
-import { Fuel } from 'lucide-react'
+import { Flame, Fuel, ClipboardList } from 'lucide-react'
 import { useState } from 'react'
 import { getFuelStatus } from '../../data/fuelStatus'
 import { Chip } from '../ui/Badge'
-import { CollapsibleCard } from '../ui/Card'
+import { CollapsibleCard, FieldPair, Separator } from '../ui/Card'
+import { icons } from '../ui/Icon'
 import { displayCallsign } from '../ui/FlightTooltip'
 
 type Unit = 'KG' | 'LT'
@@ -124,20 +125,34 @@ function Delta({ actual, planned }: { actual: number; planned: number }) {
   )
 }
 
-function Row({
+function StatCard({
+  icon: Icon,
   label,
   value,
-  trailing,
+  unit,
+  tint,
+  badge,
 }: {
+  icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
   value: string
-  trailing?: React.ReactNode
+  unit: string
+  tint: string
+  badge?: React.ReactNode
 }) {
   return (
-    <div className="flex w-full items-center gap-2 px-1 py-1">
-      <p className="flex-1 text-xs font-semibold text-fg-muted">{label}</p>
-      {trailing}
-      <p className="text-sm font-bold text-fg-primary">{value}</p>
+    <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-xl border border-border-primary bg-bg-muted p-3">
+      <div className="flex items-center justify-between">
+        <span className={`flex size-7 items-center justify-center rounded-lg ${tint}`}>
+          <Icon size={14} />
+        </span>
+        {badge}
+      </div>
+      <div className="flex flex-col">
+        <p className="text-lg leading-6 font-bold text-fg-primary">{value}</p>
+        <p className="text-[11px] font-semibold text-fg-muted">{unit}</p>
+      </div>
+      <p className="text-xs font-semibold text-fg-tertiary">{label}</p>
     </div>
   )
 }
@@ -152,6 +167,7 @@ export function FuelStatusCard({
   const f = getFuelStatus(displayCallsign(callsign))
   const [unit, setUnit] = useState<Unit>('KG')
   const conv = (kg: number) => (unit === 'KG' ? kg : kg / f.density)
+  const num = (kg: number) => Math.round(conv(kg)).toLocaleString()
   const fmt = (kg: number) => `${Math.round(conv(kg)).toLocaleString()} ${unit}`
   const pending =
     f.fuelDepartActual + f.fuelArriveActual + f.fuelOnBoard + f.towActual + f.zfwActual === 0
@@ -201,29 +217,44 @@ export function FuelStatusCard({
         </p>
       )}
 
-      <div className="flex w-full flex-col divide-y divide-border-primary">
-        <Row label="Planned fuel" value={fmt(f.plannedFuel)} />
-        <Row
-          label="Departed with"
-          value={fmt(f.fuelDepartActual)}
-          trailing={<Delta actual={f.fuelDepartActual} planned={f.plannedFuel} />}
+      <div className="flex w-full gap-2">
+        <StatCard
+          icon={ClipboardList}
+          label="Planned fuel"
+          value={num(f.plannedFuel)}
+          unit={unit}
+          tint="bg-bg-blue-subtle text-fg-blue"
         />
-        <Row label="Planned burn" value={fmt(f.plannedBurn)} />
+        <StatCard
+          icon={icons.takeoff}
+          label="Departed with"
+          value={num(f.fuelDepartActual)}
+          unit={unit}
+          tint="bg-bg-green-subtle text-fg-green"
+          badge={<Delta actual={f.fuelDepartActual} planned={f.plannedFuel} />}
+        />
+        <StatCard
+          icon={Flame}
+          label="Planned burn"
+          value={num(f.plannedBurn)}
+          unit={unit}
+          tint="bg-bg-orange-inverse text-[#f08c00]"
+        />
       </div>
 
-      <div className="flex w-full flex-col gap-2">
-        <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 px-1 text-sm">
-          <span />
-          <span className="text-right text-[11px] font-extrabold text-fg-muted">EST</span>
-          <span className="text-right text-[11px] font-extrabold text-fg-muted">ACT</span>
-          <span className="text-xs font-semibold text-fg-muted">Take-off weight</span>
-          <span className="text-right font-semibold text-fg-tertiary">{fmt(f.towEstimate)}</span>
-          <span className="text-right font-bold text-fg-primary">{fmt(f.towActual)}</span>
-          <span className="text-xs font-semibold text-fg-muted">Zero-fuel weight</span>
-          <span className="text-right font-semibold text-fg-tertiary">{fmt(f.zfwEstimate)}</span>
-          <span className="text-right font-bold text-fg-primary">{fmt(f.zfwActual)}</span>
-        </div>
-      </div>
+      <FieldPair
+        items={[
+          ['TAKE-OFF WT · EST', fmt(f.towEstimate)],
+          ['TAKE-OFF WT · ACT', fmt(f.towActual)],
+        ]}
+      />
+      <FieldPair
+        items={[
+          ['ZERO-FUEL WT · EST', fmt(f.zfwEstimate)],
+          ['ZERO-FUEL WT · ACT', fmt(f.zfwActual)],
+        ]}
+      />
+      <Separator />
 
       <p className="px-1 text-[11px] text-fg-muted">
         Density {f.density} KG/LT{f.demo ? ' · demo values' : ''}
