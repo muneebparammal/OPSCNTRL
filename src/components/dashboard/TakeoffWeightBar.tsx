@@ -41,7 +41,7 @@ export function TakeoffWeightBar({ towAct, towEst, mtow, num, unit }: Props) {
       </div>
       <div className="flex justify-between text-[11px] font-semibold text-fg-muted">
         <span>
-          Actual {num(towAct)} · est {num(towEst)}
+          ACT {num(towAct)} · EST {num(towEst)}
         </span>
         <span>
           MTOW {num(mtow)} {unit}
