@@ -3,10 +3,26 @@ import type { MapStyleId } from '../layout/MapCanvas'
 import { Switch } from './Switch'
 
 const overlays = ['NOTAMs', 'Airport', 'Airspace', 'Country Name']
+
+// Real single-tile previews from the same providers MapCanvas uses (zoom 4,
+// tile x=10/y=7 — covers the Gulf/Arabian Peninsula, matching the map's
+// default view), instead of flat placeholder color swatches.
 const mapTypes = [
-  { id: 'light', label: 'Light', swatch: 'bg-[#e8e8e8]' },
-  { id: 'dark', label: 'Dark', swatch: 'bg-[#3a3f47]' },
-  { id: 'satellite', label: 'Satelite', swatch: 'bg-[#4a5a3a]' },
+  {
+    id: 'light',
+    label: 'Light',
+    thumb: 'https://basemaps.cartocdn.com/light_all/4/10/7.png',
+  },
+  {
+    id: 'dark',
+    label: 'Dark',
+    thumb: 'https://basemaps.cartocdn.com/dark_all/4/10/7.png',
+  },
+  {
+    id: 'satellite',
+    label: 'Satelite',
+    thumb: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/4/7/10',
+  },
 ] as const
 
 type MapTypeDropdownProps = {
@@ -54,11 +70,16 @@ export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownPro
               className="flex flex-1 flex-col items-center gap-1"
             >
               <div
-                className={`h-[34px] w-full rounded-md border p-px ${
+                className={`h-[34px] w-full overflow-hidden rounded-md border p-px ${
                   mapType === type.id ? 'border-fg-secondary' : 'border-transparent'
                 }`}
               >
-                <div className={`size-full rounded-[6px] ${type.swatch}`} />
+                <img
+                  src={type.thumb}
+                  alt=""
+                  className="size-full rounded-[6px] object-cover"
+                  draggable={false}
+                />
               </div>
               <p
                 className={`w-full text-center text-xs tracking-[0.24px] ${
