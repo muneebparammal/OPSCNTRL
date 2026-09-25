@@ -3,7 +3,7 @@ import { useMapSelection } from '../../context/MapSelectionContext'
 import type { MapStyleId } from '../layout/MapCanvas'
 import { Switch } from './Switch'
 
-const overlays = ['NOTAMs', 'Airport', 'Airspace', 'Country Name']
+const overlays = ['NOTAMs', 'Airport', 'Emirates Tracker', 'Airspace', 'Country Name']
 
 // Real single-tile previews from the same providers MapCanvas uses (zoom 4,
 // tile x=10/y=7 — covers the Gulf/Arabian Peninsula, matching the map's
@@ -32,7 +32,8 @@ type MapTypeDropdownProps = {
 }
 
 export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownProps) {
-  const { showAirportsLayer, setShowAirportsLayer } = useMapSelection()
+  const { showAirportsLayer, setShowAirportsLayer, showEmiratesLayer, setShowEmiratesLayer } =
+    useMapSelection()
   const [overlayState, setOverlayState] = useState<Record<string, boolean>>({
     'NOTAMs': false,
     'Airspace': false,
@@ -40,10 +41,16 @@ export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownPro
   })
 
   const isChecked = (label: string) =>
-    label === 'Airport' ? showAirportsLayer : overlayState[label]
+    label === 'Airport'
+      ? showAirportsLayer
+      : label === 'Emirates Tracker'
+        ? showEmiratesLayer
+        : overlayState[label]
   const handleChange = (label: string, value: boolean) => {
     if (label === 'Airport') {
       setShowAirportsLayer(value)
+    } else if (label === 'Emirates Tracker') {
+      setShowEmiratesLayer(value)
     } else {
       setOverlayState((s) => ({ ...s, [label]: value }))
     }

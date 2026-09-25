@@ -1,3 +1,4 @@
+import { useMapSelection } from '../../context/MapSelectionContext'
 import { icons } from '../ui/Icon'
 import { Chip } from '../ui/Badge'
 
@@ -8,6 +9,8 @@ export function FlightDetailHeader({
   onClose?: () => void
   flightNumber?: string
 }) {
+  const { pinnedCallsigns, togglePin } = useMapSelection()
+  const pinned = pinnedCallsigns.includes(flightNumber)
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex h-14 w-full items-start gap-2">
@@ -22,8 +25,18 @@ export function FlightDetailHeader({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-4 pt-1">
-          <button type="button" aria-label="Bookmark" className="text-fg-secondary">
-            <icons.bookmark size={24} />
+          <button
+            type="button"
+            aria-label={pinned ? 'Unpin flight' : 'Pin flight'}
+            onClick={() => togglePin(flightNumber)}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+              pinned
+                ? 'border-fg-secondary bg-fg-secondary text-white'
+                : 'border-border-primary text-fg-secondary'
+            }`}
+          >
+            <icons.bookmark size={16} />
+            {pinned ? 'Pinned' : 'Pin flight'}
           </button>
           <button
             type="button"

@@ -139,6 +139,10 @@ const dxbRingsGeoJson = {
   })),
 }
 
+function isStale(positionTime: number | null) {
+  return positionTime == null || Date.now() / 1000 - positionTime > 120
+}
+
 function aircraftIcon(onGround: boolean, verticalRate: number | null) {
   if (onGround) return planeLightBlueOutline
   if (verticalRate != null && verticalRate > 1) return planeBlueSolid
@@ -161,9 +165,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   { mapType = 'light', onZoomChange },
   ref,
 ) {
-  const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
-  const simulatedFleet = useSimulatedFleet(70)
-  const mapRef = useRef<MapRef>(null)
   const {
     selectedFirId,
     showAllFirLayers,
@@ -173,7 +174,16 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     showAirportsLayer,
     selectedAirportIcao,
     setSelectedAirportIcao,
+    showEmiratesLayer,
+    pinnedCallsigns,
   } = useMapSelection()
+  const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
+  const { aircraft: emiratesFleet } = useLiveFleet({
+    emiratesOnly: true,
+    enabled: showEmiratesLayer,
+  })
+  const simulatedFleet = useSimulatedFleet(70)
+  const mapRef = useRef<MapRef>(null)
   const radarTileUrl = useRainRadar()
 
   useImperativeHandle(ref, () => ({
@@ -201,7 +211,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
 
   useEffect(() => {
     if (showDxbRing) {
-      mapRef.current?.flyTo({ center: [DXB.lng, DXB.lat], zoom: 8, duration: 1000 })
+      mapRef.current?.flyTo({
+        center: [DXB.lng, DXB.lat],
+        zoom: 8,
+        duration: 1000,
+      })
     }
   }, [showDxbRing])
 
@@ -213,9 +227,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         mapStyle={mapStyles[mapType]}
         attributionControl={false}
         style={{ width: '100%', height: '100%' }}
-        onZoom={(e) =>
-          onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))
-        }
+        onZoom={(e) => onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))}
       >
         {(showAllFirLayers || selectedFirId) && (
           <Source id="fir-boundaries" type="geojson" data={firBoundaries}>
@@ -223,7 +235,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
               <Layer
                 id="fir-outline-all"
                 type="line"
-                paint={{ 'line-color': '#94a3b8', 'line-width': 1, 'line-opacity': 0.6 }}
+                paint={{
+                  'line-color': '#94a3b8',
+                  'line-width': 1,
+                  'line-opacity': 0.6,
+                }}
               />
             )}
             {/* Mirrors --color-bg-blue-subtle / --color-fg-blue from index.css —
@@ -310,31 +326,91 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         )}
 
         {showLive
-          ? liveFleet.map((a) => (
-              <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
-                <button
-                  type="button"
-                  title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
-                  onClick={() => setSelectedFlight({ callsign: a.callsign, altitude: a.altitude })}
-                  className="cursor-pointer border-0 bg-transparent p-0"
-                >
-                  <PlaneMarker icon={aircraftIcon(a.onGround, a.verticalRate)} heading={a.heading} />
-                </button>
-              </Marker>
-            ))
+          ? liveFleet
+              .filter((a) => !(showEmiratesLayer && a.callsign.toUpperCase().startsWith('UAE')))
+              .map((a) => (
+                <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
+                  <button
+                    type="button"
+                    title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
+                    onClick={() =>
+                      setSelectedFlight({
+                        callsign: a.callsign,
+                        altitude: a.altitude,
+                        live: a,
+                      })
+                    }
+                    className="cursor-pointer border-0 bg-transparent p-0"
+                  >
+                    <PlaneMarker
+                      icon={aircraftIcon(a.onGround, a.verticalRate)}
+                      heading={a.heading}
+                    />
+                  </button>
+                </Marker>
+              ))
           : simulatedFleet.map((a, i) => (
               <Marker key={i} longitude={a.lng} latitude={a.lat}>
                 <button
                   type="button"
                   title={`EK${100 + i}`}
-                  onClick={() => setSelectedFlight({ callsign: `EK${100 + i}`, altitude: null })}
+                  onClick={() =>
+                    setSelectedFlight({
+                      callsign: `EK${100 + i}`,
+                      altitude: null,
+                    })
+                  }
                   className="cursor-pointer border-0 bg-transparent p-0"
                 >
                   <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
                 </button>
               </Marker>
             ))}
+        {showEmiratesLayer &&
+          emiratesFleet.map((a) => {
+            const stale = isStale(a.positionTime)
+            const pinned = pinnedCallsigns.includes(a.callsign)
+            return (
+              <Marker key={`ek-${a.id}`} longitude={a.lng} latitude={a.lat}>
+                <Tooltip label={`${a.callsign} : ${a.icao24.toUpperCase()}`}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedFlight({
+                        callsign: a.callsign,
+                        altitude: a.altitude,
+                        live: a,
+                      })
+                    }
+                    className={`cursor-pointer rounded-full border-0 p-0 ${
+                      pinned ? 'bg-brand-ek/25 ring-2 ring-brand-ek' : 'bg-transparent'
+                    } ${stale ? 'opacity-40 grayscale' : ''}`}
+                  >
+                    <PlaneMarker icon={planeYellowBold} heading={a.heading} size={24} />
+                  </button>
+                </Tooltip>
+              </Marker>
+            )
+          })}
       </Map>
+
+      {showEmiratesLayer && (
+        <div className="absolute bottom-16 left-6 z-10 flex flex-col gap-1.5 rounded-xl bg-bg-primary/90 px-3 py-2 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
+          <p className="text-fg-muted">Emirates Tracker · {emiratesFleet.length} flights</p>
+          <span className="flex items-center gap-2">
+            <img src={planeYellowBold} alt="" className="size-4" />
+            Emirates flight (UAE)
+          </span>
+          <span className="flex items-center gap-2">
+            <img src={planeYellowBold} alt="" className="size-4 opacity-40 grayscale" />
+            Stale position (&gt; 2 min)
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="size-4 rounded-full bg-brand-ek/25 ring-2 ring-brand-ek" />
+            Pinned
+          </span>
+        </div>
+      )}
 
       {/* Dims the basemap so markers, FIR highlights, and other overlays read
           clearly on top — matches the dark alpha treatment from the original
@@ -358,7 +434,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             : 'Live feed unavailable · showing simulated traffic'}
         {showLive && lastUpdated && (
           <span className="text-fg-muted">
-            · {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            ·{' '}
+            {lastUpdated.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </span>
         )}
       </div>

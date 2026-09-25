@@ -10,6 +10,9 @@ export type LiveAircraft = {
   velocity: number | null
   onGround: boolean
   verticalRate: number | null
+  icao24: string
+  squawk: string | null
+  positionTime: number | null
 }
 
 export type LiveFleetStatus = 'connecting' | 'live' | 'error'
@@ -33,11 +36,13 @@ type OpenSkyResponse = {
   states: (string | number | boolean | null)[][] | null
 }
 
-function parseStates(states: OpenSkyResponse['states']): LiveAircraft[] {
+function parseStates(states: OpenSkyResponse['states'], emiratesOnly: boolean): LiveAircraft[] {
   if (!states) return []
-  return states
-    .filter((s) => s[5] != null && s[6] != null)
-    .slice(0, MAX_MARKERS)
+  const usable = states.filter((s) => s[5] != null && s[6] != null)
+  return (emiratesOnly
+    ? usable.filter((s) => String(s[1] ?? '').trim().toUpperCase().startsWith('UAE'))
+    : usable.slice(0, MAX_MARKERS)
+  )
     .map((s) => ({
       id: String(s[0]),
       callsign: String(s[1] ?? '').trim() || String(s[0]),
@@ -48,27 +53,35 @@ function parseStates(states: OpenSkyResponse['states']): LiveAircraft[] {
       velocity: s[9] != null ? Number(s[9]) : null,
       onGround: Boolean(s[8]),
       verticalRate: s[11] != null ? Number(s[11]) : null,
+      icao24: String(s[0]),
+      squawk: s[14] != null ? String(s[14]) : null,
+      positionTime: s[3] != null ? Number(s[3]) : s[4] != null ? Number(s[4]) : null,
     }))
 }
 
-export function useLiveFleet() {
+// emiratesOnly polls the whole world (no bounding box) and keeps only callsigns
+// with Emirates' ICAO prefix, UAE. enabled=false skips polling entirely.
+export function useLiveFleet({ emiratesOnly = false, enabled = true } = {}) {
   const [aircraft, setAircraft] = useState<LiveAircraft[]>([])
   const [status, setStatus] = useState<LiveFleetStatus>('connecting')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
+    if (!enabled) return
     let cancelled = false
     let timer: number
 
     async function poll() {
       try {
         const { lamin, lomin, lamax, lomax } = BBOX
-        const url = `${PROXY_BASE}/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
+        const url = emiratesOnly
+          ? `${PROXY_BASE}/states/all`
+          : `${PROXY_BASE}/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`OpenSky responded ${res.status}`)
         const data: OpenSkyResponse = await res.json()
         if (cancelled) return
-        setAircraft(parseStates(data.states))
+        setAircraft(parseStates(data.states, emiratesOnly))
         setStatus('live')
         setLastUpdated(new Date())
       } catch {
@@ -83,7 +96,7 @@ export function useLiveFleet() {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [])
+  }, [emiratesOnly, enabled])
 
   return { aircraft, status, lastUpdated }
 }

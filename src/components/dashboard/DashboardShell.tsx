@@ -6,6 +6,7 @@ import { AirportStatsCards } from './AirportStatsCards'
 import { FlightDetailHeader } from './FlightDetailHeader'
 import { FlightTimesCard } from './FlightTimesCard'
 import { CrewComplementCard } from './HubCrewCards'
+import { LiveFlightCard } from './LiveFlightCard'
 import { FlightInfoCard } from './InfoCards'
 import { PassengersCard } from './PassengersCard'
 import { MapCanvas, type MapCanvasHandle, type MapStyleId } from '../layout/MapCanvas'
@@ -63,7 +64,8 @@ function DashboardShellInner({
   // the panel. Flight selection takes priority if somehow both are set.
   const activeSheetContent = selectedFlight ? (
     <>
-      <FlightInfoCard defaultOpen />
+      {selectedFlight.live && <LiveFlightCard live={selectedFlight.live} />}
+      <FlightInfoCard defaultOpen={!selectedFlight.live} />
       <FlightTimesCard />
       <PassengersCard />
       <CrewComplementCard />
