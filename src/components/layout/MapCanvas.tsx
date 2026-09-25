@@ -73,6 +73,8 @@ type MapAircraft = {
 // Fallback traffic shown while the live feed is connecting or unreachable,
 // so the map never looks empty/broken. Spread worldwide, with a cluster near
 // the Gulf so the DXB / DWC filters have traffic to show.
+const SIM_AIRLINES = ['UAE', 'UAE', 'QTR', 'SVA', 'ETD', 'FDB', 'BAW', 'DLH', 'THY', 'AIC']
+
 function useSimulatedFleet(count: number): MapAircraft[] {
   return useMemo(() => {
     let seed = 42
@@ -86,7 +88,7 @@ function useSimulatedFleet(count: number): MapAircraft[] {
       const verticalRate = (rand() - 0.5) * 12
       return {
         id: `sim-${i}`,
-        callsign: `EK${100 + i}`,
+        callsign: `${SIM_AIRLINES[i % SIM_AIRLINES.length]}${100 + i}`,
         lng: nearHub ? 53 + rand() * 5 : gulf ? 45 + rand() * 25 : -170 + rand() * 340,
         lat: nearHub ? 23 + rand() * 4 : gulf ? 15 + rand() * 17 : -45 + rand() * 110,
         heading: rand() * 360,
