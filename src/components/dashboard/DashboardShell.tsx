@@ -49,7 +49,6 @@ function DashboardShellInner({
   const [sheetOpen, setSheetOpen] = useState(defaultSheetOpen)
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
   const [mapType, setMapType] = useState<MapStyleId>('light')
-  const [zoomPercent, setZoomPercent] = useState(100)
   const mapRef = useRef<MapCanvasHandle>(null)
   const {
     selectedFlight,
@@ -111,7 +110,7 @@ function DashboardShellInner({
           onToggleSidebar={() => setSidebarExpanded((v) => !v)}
         />
         <div className="relative flex-1 overflow-hidden">
-          <MapCanvas ref={mapRef} mapType={mapType} onZoomChange={setZoomPercent} />
+          <MapCanvas ref={mapRef} mapType={mapType} />
 
           <div
             className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
@@ -134,10 +133,8 @@ function DashboardShellInner({
 
           <ZoomControls
             className={`absolute bottom-6 ${isSheetOpen ? 'right-[464px]' : 'right-6'}`}
-            percent={zoomPercent}
             onZoomIn={() => mapRef.current?.zoomIn()}
             onZoomOut={() => mapRef.current?.zoomOut()}
-            onReset={() => mapRef.current?.resetZoom()}
           />
 
           <QuickLinksBar

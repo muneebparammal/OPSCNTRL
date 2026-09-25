@@ -73,6 +73,10 @@ export const icons = {
   server: figmaIcon('server-05'),
   link: figmaIcon('link-03'),
   arrowUpRight: figmaIcon('arrow-up-right'),
+  arrowDownRight: figmaIcon('arrow-down-right'),
+  arrowUpRightMono: figmaIcon('arrow-up-right', true),
+  arrowDownRightMono: figmaIcon('arrow-down-right', true),
+  planeBlue: figmaIcon('splane-takeoff-2'),
   airspace: figmaIcon('map-02'),
   emirates: figmaIcon('emirates'),
 }

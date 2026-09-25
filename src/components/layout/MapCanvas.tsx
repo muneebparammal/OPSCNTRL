@@ -159,16 +159,14 @@ function Ripple({ color }: { color: string }) {
 export type MapCanvasHandle = {
   zoomIn: () => void
   zoomOut: () => void
-  resetZoom: () => void
 }
 
 type MapCanvasProps = {
   mapType?: MapStyleId
-  onZoomChange?: (percent: number) => void
 }
 
 export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function MapCanvas(
-  { mapType = 'light', onZoomChange },
+  { mapType = 'light' },
   ref,
 ) {
   const {
@@ -215,7 +213,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   useImperativeHandle(ref, () => ({
     zoomIn: () => mapRef.current?.zoomIn(),
     zoomOut: () => mapRef.current?.zoomOut(),
-    resetZoom: () => mapRef.current?.flyTo({ zoom: INITIAL_ZOOM }),
   }))
 
   const showLive = status === 'live' && liveFleet.length > 0
@@ -405,7 +402,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         }}
         onStyleData={applyCountryLabels}
         onMoveEnd={updateBounds}
-        onZoom={(e) => onZoomChange?.(Math.round(2 ** (e.viewState.zoom - INITIAL_ZOOM) * 100))}
       >
         {(showAllFirLayers || selectedFirId) && (
           <Source id="fir-boundaries" type="geojson" data={firBoundaries}>
