@@ -3,6 +3,7 @@ import { MapSelectionProvider, useMapSelection } from '../../context/MapSelectio
 import { airports } from '../../data/airports'
 import { notams } from '../../data/notams'
 import { NotamDetailCards, NotamDetailHeader } from './NotamDetail'
+import { FuelStatusCard } from './FuelStatusCard'
 import { FlightLayersPanel } from './FlightLayersPanel'
 import { SheetSimpleHeader } from './SheetSimpleHeader'
 import { AirportDetailHeader } from './AirportDetailHeader'
@@ -92,6 +93,7 @@ function DashboardShellInner({
       {selectedFlight.live && <LiveFlightCard live={selectedFlight.live} />}
       <FlightInfoCard defaultOpen={!selectedFlight.live} />
       <FlightTimesCard />
+      <FuelStatusCard callsign={selectedFlight.callsign} />
       <PassengersCard />
       <CrewComplementCard />
     </>
