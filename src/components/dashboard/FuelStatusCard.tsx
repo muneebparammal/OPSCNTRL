@@ -4,6 +4,7 @@ import { getFuelStatus } from '../../data/fuelStatus'
 import { Chip } from '../ui/Badge'
 import { CollapsibleCard, Separator } from '../ui/Card'
 import { icons } from '../ui/Icon'
+import { WeightConcepts } from './WeightConcepts'
 import { displayCallsign } from '../ui/FlightTooltip'
 
 type Unit = 'KG' | 'LT'
@@ -272,6 +273,18 @@ export function FuelStatusCard({
           },
         ]}
       />
+      <WeightConcepts
+        zfwAct={f.zfwActual}
+        zfwEst={f.zfwEstimate}
+        fuelAct={f.fuelDepartActual}
+        fuelEst={f.plannedFuel}
+        towAct={f.towActual}
+        towEst={f.towEstimate}
+        mtow={575000}
+        num={num}
+        unit={unit}
+      />
+
       <Separator />
 
       <p className="px-1 text-[11px] text-fg-muted">
