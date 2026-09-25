@@ -19,7 +19,7 @@ function FilterChip({
       onClick={onClick}
       className={`flex h-8 items-center rounded-full border px-3 text-sm font-semibold shadow-xs transition-colors ${
         active
-          ? 'border-fg-secondary bg-fg-secondary text-white'
+          ? 'border-inverse bg-inverse text-white'
           : 'border-border-primary bg-bg-primary text-fg-secondary'
       }`}
     >

@@ -39,7 +39,7 @@ export function ConnectingPassengersPanel() {
               onClick={() => setDirection(dir)}
               className={`flex h-7 items-center gap-1.5 rounded-full py-1 pr-1 pl-3 text-sm font-semibold ${
                 active
-                  ? 'bg-fg-secondary text-white'
+                  ? 'bg-inverse text-white'
                   : 'border border-border-primary bg-bg-primary text-fg-secondary'
               }`}
             >

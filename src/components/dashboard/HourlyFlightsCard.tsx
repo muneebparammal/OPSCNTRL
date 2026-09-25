@@ -28,7 +28,7 @@ export function HourlyFlightsCard({ defaultOpen = false }: { defaultOpen?: boole
             onClick={() => setHourMode(mode)}
             className={`flex h-8 flex-1 items-center justify-center rounded-full border text-xs font-semibold ${
               hourMode === mode
-                ? 'border-fg-secondary bg-fg-secondary text-white'
+                ? 'border-inverse bg-inverse text-white'
                 : 'border-border-primary text-fg-secondary'
             }`}
           >
@@ -47,7 +47,7 @@ export function HourlyFlightsCard({ defaultOpen = false }: { defaultOpen?: boole
               onClick={() => setHourFilter(active ? null : h)}
               className={`flex flex-col items-center rounded-lg border py-1.5 ${
                 active
-                  ? 'border-fg-secondary bg-fg-secondary text-white'
+                  ? 'border-inverse bg-inverse text-white'
                   : 'border-border-primary bg-bg-primary text-fg-secondary'
               }`}
             >

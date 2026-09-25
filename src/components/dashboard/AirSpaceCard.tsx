@@ -47,7 +47,7 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
               onClick={() => setSelectedFirId(active ? null : r.id)}
               className={`flex h-12 w-full shrink-0 items-center justify-between rounded-2xl px-4 text-left transition-colors ${
                 active
-                  ? 'bg-fg-secondary text-white'
+                  ? 'bg-inverse text-white'
                   : 'bg-bg-muted text-fg-secondary hover:bg-bg-tertiary'
               }`}
             >

@@ -193,6 +193,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     selectedNotamId,
     setSelectedNotamId,
     settings,
+    refreshTick,
   } = useMapSelection()
   const {
     aircraft: liveFleet,
@@ -201,6 +202,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   } = useLiveFleet({
     intervalMs: settings.refreshSec * 1000,
     paused: settings.paused,
+    refreshKey: refreshTick,
   })
   const emiratesFleet = useMemo(
     () => liveFleet.filter((a) => a.callsign.toUpperCase().startsWith('UAE')),
@@ -458,7 +460,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           <Marker longitude={DXB.lng} latitude={DXB.lat}>
             <div className="flex flex-col items-center gap-1">
               <div className="size-2.5 rounded-full border-2 border-white bg-fg-blue shadow-sm" />
-              <span className="rounded bg-fg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="rounded bg-inverse px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 DXB
               </span>
             </div>
@@ -478,7 +480,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                       active
                         ? 'size-6 bg-fg-red'
                         : a.size === 'large'
-                          ? 'size-5 bg-fg-secondary'
+                          ? 'size-5 bg-inverse'
                           : 'size-4 bg-fg-grey-blue'
                     }`}
                   >
@@ -582,7 +584,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           <Marker longitude={DXB.lng} latitude={DXB.lat}>
             <div className="flex flex-col items-center gap-1">
               <div className="size-3 rounded-full border-2 border-white bg-brand-ek shadow-sm" />
-              <span className="rounded bg-fg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="rounded bg-inverse px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 DXB
               </span>
             </div>
@@ -620,7 +622,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                     size={(isFourEngine(a) ? 34 : 22) * ICON_SCALE[settings.iconScale]}
                   />
                   {settings.showLabels && (
-                    <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 rounded bg-fg-secondary/85 px-1 text-[9px] font-semibold whitespace-nowrap text-white">
+                    <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 rounded bg-inverse/85 px-1 text-[9px] font-semibold whitespace-nowrap text-white">
                       {a.callsign}
                     </span>
                   )}

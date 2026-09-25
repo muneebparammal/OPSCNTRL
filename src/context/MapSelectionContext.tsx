@@ -74,6 +74,8 @@ type MapSelectionContextValue = {
   setHourMode: (mode: 'both' | 'departure' | 'arrival') => void
   hourlyCounts: HourlyCounts
   setHourlyCounts: (counts: HourlyCounts) => void
+  refreshTick: number
+  requestRefresh: () => void
   showEmiratesLayer: boolean
   showCountryNames: boolean
   setShowCountryNames: (show: boolean) => void
@@ -111,6 +113,8 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
     list.includes(v) ? list.filter((x) => x !== v) : [...list, v]
   const toggleTypeFilter = (t: string) => setTypeFilter((l) => toggleIn(l, t))
   const toggleStatusFilter = (s: string) => setStatusFilter((l) => toggleIn(l, s))
+  const [refreshTick, setRefreshTick] = useState(0)
+  const requestRefresh = () => setRefreshTick((t) => t + 1)
   const [showCountryNames, setShowCountryNames] = useState(true)
   const [showNotams, setShowNotams] = useState(false)
   const [selectedNotamId, setSelectedNotamId] = useState<string | null>(null)
@@ -167,6 +171,8 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
         setHourMode,
         hourlyCounts,
         setHourlyCounts,
+        refreshTick,
+        requestRefresh,
         showEmiratesLayer,
         setShowEmiratesLayer,
         showCountryNames,

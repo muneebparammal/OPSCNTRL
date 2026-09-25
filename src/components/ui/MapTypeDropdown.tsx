@@ -87,7 +87,7 @@ export function MapTypeDropdown({ mapType, onMapTypeChange }: MapTypeDropdownPro
             >
               <div
                 className={`h-[34px] w-full overflow-hidden rounded-md border p-px ${
-                  mapType === type.id ? 'border-fg-secondary' : 'border-transparent'
+                  mapType === type.id ? 'border-inverse' : 'border-transparent'
                 }`}
               >
                 <img

@@ -22,7 +22,7 @@ function QuickLinkButton({ icon: Icon, label, active, onClick, badge }: QuickLin
         aria-pressed={active}
         onClick={onClick}
         className={`relative flex size-12 items-center justify-center rounded-full shadow-xs transition-colors ${
-          active ? 'bg-fg-secondary text-white' : 'bg-bg-primary text-fg-secondary'
+          active ? 'bg-inverse text-white' : 'bg-bg-primary text-fg-secondary'
         }`}
       >
         <Icon size={16} />

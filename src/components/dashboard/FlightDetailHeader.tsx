@@ -31,7 +31,7 @@ export function FlightDetailHeader({
             onClick={() => togglePin(flightNumber)}
             className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
               pinned
-                ? 'border-fg-secondary bg-fg-secondary text-white'
+                ? 'border-inverse bg-inverse text-white'
                 : 'border-border-primary text-fg-secondary'
             }`}
           >

@@ -1,13 +1,25 @@
-import { Moon, RefreshCw } from 'lucide-react'
+import { Moon, RefreshCw, Sun } from 'lucide-react'
+import { useState } from 'react'
 import { icons } from '../ui/Icon'
 
 type NavBarProps = {
   breadcrumb: string
   sidebarExpanded?: boolean
   onToggleSidebar?: () => void
+  dark?: boolean
+  onToggleTheme?: () => void
+  onRefresh?: () => void
 }
 
-export function NavBar({ breadcrumb, sidebarExpanded = false, onToggleSidebar }: NavBarProps) {
+export function NavBar({
+  breadcrumb,
+  sidebarExpanded = false,
+  onToggleSidebar,
+  dark = false,
+  onToggleTheme,
+  onRefresh,
+}: NavBarProps) {
+  const [spinning, setSpinning] = useState(false)
   return (
     <header className="flex h-[70px] w-full shrink-0 items-center justify-between border-b border-border-primary bg-bg-primary px-6">
       <div className="flex items-center gap-2">
@@ -40,16 +52,23 @@ export function NavBar({ breadcrumb, sidebarExpanded = false, onToggleSidebar }:
         <button
           type="button"
           aria-label="Toggle dark mode"
+          aria-pressed={dark}
+          onClick={onToggleTheme}
           className="flex size-8 items-center justify-center rounded-full border border-border-primary text-fg-secondary"
         >
-          <Moon size={16} />
+          {dark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
         <button
           type="button"
           aria-label="Refresh"
+          onClick={() => {
+            onRefresh?.()
+            setSpinning(true)
+            window.setTimeout(() => setSpinning(false), 900)
+          }}
           className="flex size-8 items-center justify-center rounded-full border border-border-primary text-fg-secondary"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} className={spinning ? 'animate-spin' : ''} />
         </button>
       </div>
     </header>

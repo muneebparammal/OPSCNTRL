@@ -15,6 +15,7 @@
   --color-bg-sidebar-secondary: #e5e5e5;
   --color-bg-popover: #ffffff;
   --color-bg-inverse-secondary: #262626;
+  --color-inverse: #171717;
 
   --color-bg-green-muted: #f6fbf6;
   --color-bg-green-subtle: #d4ecd5;
@@ -46,8 +47,44 @@
   --shadow-modal: 0 5px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
+/* Dark theme: same tokens, dark values. Toggled via the .dark class on <html>. */
+.dark {
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #2a2a2a;
+  --color-bg-muted: #121212;
+  --color-bg-card: #141414;
+  --color-bg-sidebar: #0f0f0f;
+  --color-bg-sidebar-secondary: #262626;
+  --color-bg-popover: #171717;
+  --color-inverse: #333333;
+
+  --color-bg-green-muted: #0f1f10;
+  --color-bg-green-subtle: #1b3a1d;
+  --color-bg-red-subtle: #3d1616;
+  --color-bg-blue-subtle: #10314a;
+  --color-bg-grey-blue-subtle: #25313a;
+  --color-bg-orange-inverse: #2a1c0e;
+
+  --color-fg-primary: #fafafa;
+  --color-fg-secondary: #f5f5f5;
+  --color-fg-tertiary: #e5e5e5;
+  --color-fg-muted: #a3a3a3;
+
+  --color-fg-green: #6cc46f;
+  --color-fg-blue: #4aa3ee;
+  --color-fg-red: #f26b6b;
+  --color-fg-grey-blue: #8fa8b4;
+
+  --color-border-primary: #2a2a2a;
+  --color-border-input: #2a2a2a;
+
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
+  background: var(--color-bg-primary);
   font-family: var(--font-sans);
   color: var(--color-fg-secondary);
   -webkit-font-smoothing: antialiased;

@@ -55,7 +55,8 @@ function parseStates(states: OpenSkyResponse['states']): LiveAircraft[] {
 export function useLiveFleet({
   intervalMs = POLL_INTERVAL_MS,
   paused = false,
-}: { intervalMs?: number; paused?: boolean } = {}) {
+  refreshKey = 0,
+}: { intervalMs?: number; paused?: boolean; refreshKey?: number } = {}) {
   const [aircraft, setAircraft] = useState<LiveAircraft[]>([])
   const [status, setStatus] = useState<LiveFleetStatus>('connecting')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -87,7 +88,7 @@ export function useLiveFleet({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [intervalMs, paused])
+  }, [intervalMs, paused, refreshKey])
 
   return { aircraft, status, lastUpdated }
 }
