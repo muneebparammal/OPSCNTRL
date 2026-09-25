@@ -18,6 +18,7 @@ import { useMapSelection } from '../../context/MapSelectionContext'
 import firBoundaries from '../../data/firBoundaries.geojson?url'
 import { firRegions } from '../../data/firRegions'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
+import { useRainRadar } from '../../hooks/useRainRadar'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
 
@@ -160,8 +161,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
   const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
-  const { selectedFirId, showAllFirLayers, showDxbRing, showWeather, setShowWeather } =
-    useMapSelection()
+  const { selectedFirId, showAllFirLayers, showDxbRing, showWeather } = useMapSelection()
+  const radarTileUrl = useRainRadar()
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => mapRef.current?.zoomIn(),
@@ -262,6 +263,12 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           </Marker>
         )}
 
+        {showWeather && radarTileUrl && (
+          <Source id="weather-radar" type="raster" tiles={[radarTileUrl]} tileSize={256}>
+            <Layer id="weather-radar-layer" type="raster" paint={{ 'raster-opacity': 0.55 }} />
+          </Source>
+        )}
+
         {showLive
           ? liveFleet.map((a) => (
               <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
@@ -283,30 +290,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
       <div className="pointer-events-none absolute inset-0 bg-black/15" />
 
       {showWeather && (
-        <div className="absolute top-6 right-6 z-20 w-[360px] overflow-hidden rounded-2xl border border-border-primary bg-bg-primary shadow-popover">
-          <div className="flex items-center justify-between border-b border-border-primary px-4 py-2.5">
-            <p className="text-sm font-semibold text-fg-primary">Weather · Windy</p>
-            <button
-              type="button"
-              aria-label="Close weather"
-              onClick={() => setShowWeather(false)}
-              className="text-fg-secondary/70 hover:text-fg-secondary"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M18 6 6 18M6 6l12 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-          <iframe
-            title="Windy weather map"
-            className="h-[280px] w-full border-0"
-            src={`https://embed.windy.com/embed2.html?lat=${DXB.lat}&lon=${DXB.lng}&detailLat=${DXB.lat}&detailLon=${DXB.lng}&zoom=5&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&metricWind=default&metricTemp=default&radarRange=-1`}
+        <div className="absolute top-6 right-6 z-20 flex items-center gap-2 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
+          <span
+            className={`size-1.5 rounded-full ${radarTileUrl ? 'bg-fg-blue' : 'animate-pulse bg-fg-muted'}`}
           />
+          {radarTileUrl ? 'Live radar · RainViewer' : 'Loading radar…'}
         </div>
       )}
 
