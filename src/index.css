@@ -57,3 +57,8 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+/* Raise a map marker above its neighbours while its tooltip is showing. */
+.maplibregl-marker:has(.group:hover) {
+  z-index: 50;
+}

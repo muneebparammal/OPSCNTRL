@@ -20,6 +20,7 @@ import { useRainRadar } from '../../hooks/useRainRadar'
 import { AircraftIcon, FLOW_COLORS, type FlowKind } from './AircraftIcon'
 import { icons } from '../ui/Icon'
 import { notams, type NotamSeverity } from '../../data/notams'
+import { FlightTooltip } from '../ui/FlightTooltip'
 import { Tooltip } from '../ui/Tooltip'
 
 maplibreConfig.WORKER_URL = MaplibreWorker
@@ -600,31 +601,33 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
             <div className="relative flex items-center justify-center">
               {selectedFlight?.callsign === a.callsign && <Ripple color={kindColor(a)} />}
-              <button
-                type="button"
-                title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
-                onClick={() =>
-                  setSelectedFlight({
-                    callsign: a.callsign,
-                    altitude: a.altitude,
-                    live: a.live,
-                    position: { lng: a.lng, lat: a.lat, heading: a.heading },
-                  })
-                }
-                className="relative cursor-pointer border-0 bg-transparent p-0"
-              >
-                <AircraftIcon
-                  kind={kindOf(a)}
-                  fourEngine={isFourEngine(a)}
-                  heading={a.heading}
-                  size={(isFourEngine(a) ? 34 : 22) * ICON_SCALE[settings.iconScale]}
-                />
-                {settings.showLabels && (
-                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 rounded bg-fg-secondary/85 px-1 text-[9px] font-semibold whitespace-nowrap text-white">
-                    {a.callsign}
-                  </span>
-                )}
-              </button>
+              <FlightTooltip callsign={a.callsign}>
+                <button
+                  type="button"
+                  title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
+                  onClick={() =>
+                    setSelectedFlight({
+                      callsign: a.callsign,
+                      altitude: a.altitude,
+                      live: a.live,
+                      position: { lng: a.lng, lat: a.lat, heading: a.heading },
+                    })
+                  }
+                  className="relative cursor-pointer border-0 bg-transparent p-0"
+                >
+                  <AircraftIcon
+                    kind={kindOf(a)}
+                    fourEngine={isFourEngine(a)}
+                    heading={a.heading}
+                    size={(isFourEngine(a) ? 34 : 22) * ICON_SCALE[settings.iconScale]}
+                  />
+                  {settings.showLabels && (
+                    <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 rounded bg-fg-secondary/85 px-1 text-[9px] font-semibold whitespace-nowrap text-white">
+                      {a.callsign}
+                    </span>
+                  )}
+                </button>
+              </FlightTooltip>
             </div>
           </Marker>
         ))}
@@ -635,7 +638,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             const pinned = pinnedCallsigns.includes(a.callsign)
             return (
               <Marker key={`ek-${a.id}`} longitude={a.lng} latitude={a.lat}>
-                <Tooltip label={`${a.callsign} : ${a.icao24.toUpperCase()}`}>
+                <FlightTooltip callsign={a.callsign}>
                   <button
                     type="button"
                     onClick={() =>
@@ -656,7 +659,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                       heading={a.heading}
                     />
                   </button>
-                </Tooltip>
+                </FlightTooltip>
               </Marker>
             )
           })}
