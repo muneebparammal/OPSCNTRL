@@ -4,10 +4,14 @@ type PillTabsProps = {
   tabs: string[]
   defaultTab?: string
   className?: string
+  value?: string
+  onChange?: (tab: string) => void
 }
 
-export function PillTabs({ tabs, defaultTab, className = '' }: PillTabsProps) {
-  const [active, setActive] = useState(defaultTab ?? tabs[0])
+export function PillTabs({ tabs, defaultTab, className = '', value, onChange }: PillTabsProps) {
+  const [internalActive, setInternalActive] = useState(defaultTab ?? tabs[0])
+  const active = value ?? internalActive
+  const setActive = onChange ?? setInternalActive
   return (
     <div className={`flex h-9 items-center rounded-full bg-bg-secondary p-1 ${className}`}>
       {tabs.map((tab) => (

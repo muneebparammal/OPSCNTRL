@@ -1,5 +1,6 @@
 import { Bookmark, Layers, PanelRight, Search, Settings } from 'lucide-react'
 import { useState } from 'react'
+import { type AirportFilter, useMapSelection } from '../../context/MapSelectionContext'
 import type { MapStyleId } from './MapCanvas'
 import { MapTypeDropdown } from '../ui/MapTypeDropdown'
 import { PillTabs } from '../ui/Tabs'
@@ -20,13 +21,14 @@ export function SearchTabsBar({
   onMapTypeChange: (id: MapStyleId) => void
 }) {
   const [showMapType, setShowMapType] = useState(mapTypeDefaultOpen)
+  const { airportFilter, setAirportFilter } = useMapSelection()
 
   return (
     <div className="flex w-full items-start justify-between px-6">
       <div
-        className={`flex min-w-0 items-center gap-2 ${narrow ? 'max-w-[800px]' : 'max-w-[928.5px]'}`}
+        className={`flex min-w-0 items-center gap-2 ${narrow ? 'max-w-[520px]' : 'max-w-[620px]'}`}
       >
-        <div className="flex min-w-[120px] flex-1 flex-col gap-2">
+        <div className="flex min-w-[160px] flex-1 flex-col gap-2">
           <div className="flex h-9 items-center gap-2 rounded-full border border-border-input bg-white px-3 py-1 shadow-xs">
             <Search size={16} className="shrink-0 text-fg-muted" />
             <input
@@ -36,8 +38,12 @@ export function SearchTabsBar({
             />
           </div>
         </div>
-        <PillTabs tabs={['All Flights', 'Arrival', 'Departure']} className="shrink-0" />
-        <PillTabs tabs={['ALL', 'DXB', 'DWC']} className="shrink-0" />
+        <PillTabs
+          tabs={['ALL', 'DXB', 'DWC']}
+          value={airportFilter}
+          onChange={(v) => setAirportFilter(v as AirportFilter)}
+          className="shrink-0"
+        />
       </div>
       <div className="relative">
         <div className="flex h-9 w-[168px] items-center rounded-full bg-bg-secondary p-1">
