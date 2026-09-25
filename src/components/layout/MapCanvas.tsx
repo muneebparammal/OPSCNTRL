@@ -289,15 +289,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           design. pointer-events-none so it never blocks map interaction. */}
       <div className="pointer-events-none absolute inset-0 bg-black/15" />
 
-      {showWeather && (
-        <div className="absolute top-6 right-6 z-20 flex items-center gap-2 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
-          <span
-            className={`size-1.5 rounded-full ${radarTileUrl ? 'bg-fg-blue' : 'animate-pulse bg-fg-muted'}`}
-          />
-          {radarTileUrl ? 'Live radar · RainViewer' : 'Loading radar…'}
-        </div>
-      )}
-
       <div className="absolute bottom-6 left-6 z-10 flex items-center gap-1.5 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
         <span
           className={`size-1.5 rounded-full ${
