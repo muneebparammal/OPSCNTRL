@@ -94,7 +94,6 @@ function DashboardShellInner({
       <FlightInfoCard defaultOpen={!selectedFlight.live} />
       <FlightTimesCard />
       <FuelStatusCard callsign={selectedFlight.callsign} />
-      <FuelStatusCard callsign={selectedFlight.callsign} full />
       <PassengersCard />
       <CrewComplementCard />
     </>
