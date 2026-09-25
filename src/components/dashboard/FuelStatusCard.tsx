@@ -1,4 +1,4 @@
-import { Fuel, Scale } from 'lucide-react'
+import { Fuel, Weight } from 'lucide-react'
 import { useState } from 'react'
 import { getFuelStatus } from '../../data/fuelStatus'
 import { Chip } from '../ui/Badge'
@@ -137,41 +137,47 @@ function StatCard({
   badge?: React.ReactNode
 }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-xl border border-border-primary bg-bg-muted p-3">
-      <p className="text-xs font-semibold whitespace-nowrap text-fg-tertiary">{label}</p>
-      <p className="text-lg leading-6 font-bold text-fg-primary">{value}</p>
-      <div className="flex min-h-5 items-center justify-between gap-1">
-        <p className="text-[11px] font-semibold text-fg-muted">{unit}</p>
-        {badge}
+    <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-2xl bg-bg-secondary px-3 py-3">
+      <p className="text-xs font-extrabold whitespace-nowrap text-fg-secondary">{label}</p>
+      <div className="flex items-end gap-1 text-fg-secondary">
+        <p className="text-xl leading-6 font-bold">{value}</p>
+        <p className="pb-0.5 text-xs tracking-[0.24px]">{unit}</p>
       </div>
+      <div className="flex min-h-5 items-center">{badge}</div>
     </div>
   )
 }
 
-function WeightRow({
+function WeightCard({
   icon: Icon,
   label,
   est,
   act,
+  unit,
+  badge,
 }: {
   icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
   est: string
   act: string
+  unit: string
+  badge?: React.ReactNode
 }) {
   return (
-    <div className="flex w-full items-center gap-3 rounded-xl border border-border-primary bg-bg-muted px-3 py-2.5">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-bg-secondary text-fg-secondary">
-        <Icon size={16} />
-      </span>
-      <p className="flex-1 text-sm font-semibold text-fg-primary">{label}</p>
-      <div className="flex flex-col items-end">
-        <p className="text-[11px] font-extrabold text-fg-muted">EST</p>
-        <p className="text-sm font-semibold text-fg-tertiary">{est}</p>
+    <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-2xl bg-bg-secondary px-4 py-3">
+      <div className="flex items-center gap-1.5 text-fg-secondary">
+        <Icon size={14} />
+        <p className="flex-1 text-xs font-extrabold whitespace-nowrap">{label}</p>
+        {badge}
       </div>
-      <div className="flex flex-col items-end">
-        <p className="text-[11px] font-extrabold text-fg-muted">ACT</p>
-        <p className="text-sm font-bold text-fg-primary">{act}</p>
+      <div className="flex items-end gap-1 text-fg-secondary">
+        <p className="text-xl leading-6 font-bold">{act}</p>
+        <p className="pb-0.5 text-xs tracking-[0.24px]">{unit} actual</p>
+      </div>
+      <div className="flex items-center gap-1 border-l-2 border-fg-grey-blue pl-1.5">
+        <p className="text-xs font-medium text-fg-tertiary">
+          Estimate {est} {unit}
+        </p>
       </div>
     </div>
   )
@@ -248,18 +254,22 @@ export function FuelStatusCard({
         <StatCard label="Planned burn" value={num(f.plannedBurn)} unit={unit} />
       </div>
 
-      <div className="flex w-full flex-col gap-2">
-        <WeightRow
+      <div className="flex w-full gap-2">
+        <WeightCard
           icon={icons.takeoff}
           label="Take-off weight"
-          est={fmt(f.towEstimate)}
-          act={fmt(f.towActual)}
+          act={num(f.towActual)}
+          est={num(f.towEstimate)}
+          unit={unit}
+          badge={<Delta actual={f.towActual} planned={f.towEstimate} />}
         />
-        <WeightRow
-          icon={Scale}
+        <WeightCard
+          icon={Weight}
           label="Zero-fuel weight"
-          est={fmt(f.zfwEstimate)}
-          act={fmt(f.zfwActual)}
+          act={num(f.zfwActual)}
+          est={num(f.zfwEstimate)}
+          unit={unit}
+          badge={<Delta actual={f.zfwActual} planned={f.zfwEstimate} />}
         />
       </div>
       <Separator />
