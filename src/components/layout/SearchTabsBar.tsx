@@ -64,8 +64,11 @@ export function SearchTabsBar({
           <button
             type="button"
             aria-label="Map layers"
+            aria-pressed={showMapType}
             onClick={() => setShowMapType((v) => !v)}
-            className="flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary"
+            className={`flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary ${
+              showMapType ? 'bg-bg-primary shadow-sm' : ''
+            }`}
           >
             <icons.layers size={16} />
           </button>
