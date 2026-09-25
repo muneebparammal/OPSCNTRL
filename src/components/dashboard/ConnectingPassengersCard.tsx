@@ -1,4 +1,4 @@
-import { ArrowUpRight, PlaneLanding, PlaneTakeoff } from 'lucide-react'
+import { icons } from '../ui/Icon'
 import { useState } from 'react'
 
 type Row = { flight: string; from: string; to: string; pax: number; hrs: string }
@@ -21,7 +21,7 @@ export function ConnectingPassengersPanel() {
     <>
       <div className="flex w-full gap-2">
         {(['Inbound', 'Outbound'] as const).map((dir) => {
-          const Icon = dir === 'Inbound' ? PlaneLanding : PlaneTakeoff
+          const Icon = dir === 'Inbound' ? icons.landing : icons.takeoff
           return (
             <button
               key={dir}
@@ -55,10 +55,10 @@ export function ConnectingPassengersPanel() {
         <div className="flex max-h-[300px] w-full flex-col gap-1 overflow-y-auto">
           {rows.map((row, i) => (
             <div key={i} className="flex w-full items-center gap-2 rounded-2xl bg-bg-muted px-4 py-2.5">
-              <ArrowUpRight size={16} className="shrink-0 text-fg-secondary" />
+              <icons.arrowUpRight size={16} className="shrink-0 text-fg-secondary" />
               <p className="text-sm font-bold text-fg-secondary">{row.flight}</p>
               <span className="flex items-center gap-1 text-xs font-semibold text-fg-muted">
-                {row.from} <PlaneTakeoff size={12} /> {row.to}
+                {row.from} <icons.takeoff size={12} /> {row.to}
               </span>
               <p className="flex-1 text-right text-sm text-fg-secondary">{row.pax}</p>
               <p className="w-[70px] text-right text-sm text-fg-secondary">{row.hrs}</p>

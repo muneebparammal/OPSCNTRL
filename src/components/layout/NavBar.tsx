@@ -1,4 +1,5 @@
-import { Bell, Moon, PanelLeft, RefreshCw } from 'lucide-react'
+import { Moon, RefreshCw } from 'lucide-react'
+import { icons } from '../ui/Icon'
 
 type NavBarProps = {
   breadcrumb: string
@@ -19,7 +20,7 @@ export function NavBar({ breadcrumb, sidebarExpanded = false, onToggleSidebar }:
             sidebarExpanded ? 'bg-bg-secondary' : ''
           }`}
         >
-          <PanelLeft size={16} />
+          <icons.panelLeft size={16} />
         </button>
         <div className="h-[15px] w-px bg-border-primary" />
         <p className="text-sm font-medium tracking-[0.28px] text-fg-primary">{breadcrumb}</p>
@@ -27,7 +28,7 @@ export function NavBar({ breadcrumb, sidebarExpanded = false, onToggleSidebar }:
       <div className="flex items-center gap-1">
         <div className="flex items-center gap-2 rounded-lg p-4">
           <div className="flex size-8 items-center justify-center rounded-lg border border-border-primary bg-bg-muted">
-            <Bell size={16} className="text-fg-secondary" />
+            <icons.bell size={16} className="text-fg-secondary" />
           </div>
           <div className="flex flex-col items-start gap-1 tracking-[0.28px]">
             <p className="text-sm font-semibold text-fg-primary">

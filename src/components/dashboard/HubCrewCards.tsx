@@ -1,9 +1,9 @@
-import { Server, UsersRound } from 'lucide-react'
+import { icons } from '../ui/Icon'
 import { CollapsibleCard, FieldPair } from '../ui/Card'
 
 export function HubActivityCard({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
-    <CollapsibleCard icon={Server} title="Hub Activity" defaultOpen={defaultOpen}>
+    <CollapsibleCard icon={icons.server} title="Hub Activity" defaultOpen={defaultOpen}>
       <FieldPair
         items={[
           ['ON GROUND', '38'],
@@ -16,7 +16,7 @@ export function HubActivityCard({ defaultOpen = false }: { defaultOpen?: boolean
 
 export function CrewComplementCard({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
-    <CollapsibleCard icon={UsersRound} title="Crew Complement" defaultOpen={defaultOpen}>
+    <CollapsibleCard icon={icons.users} title="Crew Complement" defaultOpen={defaultOpen}>
       <FieldPair
         items={[
           ['COCKPIT', '4'],

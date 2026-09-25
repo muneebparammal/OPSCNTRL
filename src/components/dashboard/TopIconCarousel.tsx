@@ -1,11 +1,11 @@
-import { AlertCircle, Clock, CloudSun, Coins, Ruler } from 'lucide-react'
+import { icons } from '../ui/Icon'
 
 const items = [
-  { icon: Ruler, label: 'Measure' },
-  { icon: Coins, label: 'Currency' },
-  { icon: Clock, label: 'History' },
-  { icon: AlertCircle, label: 'Alerts', badge: 10 },
-  { icon: CloudSun, label: 'Weather' },
+  { icon: icons.firBoundaries, label: 'Measure' },
+  { icon: icons.currency, label: 'Currency' },
+  { icon: icons.clock, label: 'History' },
+  { icon: icons.alert, label: 'Alerts', badge: 10 },
+  { icon: icons.weatherLarge, label: 'Weather' },
 ]
 
 export function TopIconCarousel({ className = '' }: { className?: string }) {

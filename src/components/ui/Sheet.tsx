@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { icons } from './Icon'
 import type { ReactNode } from 'react'
 
 type SheetProps = {
@@ -24,7 +24,7 @@ export function Sheet({ open, onClose, children, title, hideDefaultClose = false
                 aria-label="Close"
                 className="shrink-0 rounded-md p-0.5 text-fg-secondary/70 hover:bg-bg-secondary"
               >
-                <X size={24} />
+                <icons.close size={24} />
               </button>
             )}
           </div>
@@ -35,7 +35,7 @@ export function Sheet({ open, onClose, children, title, hideDefaultClose = false
             aria-label="Close"
             className="absolute top-5 right-5 rounded-md p-0.5 text-fg-secondary/70 hover:bg-bg-secondary"
           >
-            <X size={24} />
+            <icons.close size={24} />
           </button>
         )}
         <div className="flex w-full flex-col gap-3">{children}</div>

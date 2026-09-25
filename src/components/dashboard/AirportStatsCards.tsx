@@ -1,4 +1,5 @@
-import { Building2, Plane, Radio, Users } from 'lucide-react'
+import { Building2, Radio } from 'lucide-react'
+import { icons } from '../ui/Icon'
 import type { Airport } from '../../data/airports'
 import { CollapsibleCard, FieldPair } from '../ui/Card'
 
@@ -28,7 +29,7 @@ export function AirportStatsCards({ airport }: { airport: Airport }) {
 
   return (
     <>
-      <CollapsibleCard icon={Users} title="Crew Complement" defaultOpen>
+      <CollapsibleCard icon={icons.users} title="Crew Complement" defaultOpen>
         <FieldPair
           items={[
             ['COCKPIT CREW', String(stats.cockpitCrew)],
@@ -47,7 +48,7 @@ export function AirportStatsCards({ airport }: { airport: Airport }) {
         />
       </CollapsibleCard>
 
-      <CollapsibleCard icon={Plane} title="Runways">
+      <CollapsibleCard icon={icons.plane} title="Runways">
         <FieldPair items={[['ACTIVE RUNWAYS', String(stats.runwaysActive)]]} />
       </CollapsibleCard>
 

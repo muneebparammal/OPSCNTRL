@@ -1,8 +1,9 @@
-import { Clock4, PlaneLanding, PlaneTakeoff } from 'lucide-react'
+import type { IconComponent } from '../ui/Icon'
+import { icons } from '../ui/Icon'
 import { CollapsibleCard } from '../ui/Card'
 
 type TimeRow = {
-  icon: React.ElementType
+  icon: IconComponent
   label: string
   sch: string
   est: string
@@ -11,13 +12,13 @@ type TimeRow = {
 }
 
 const rows: TimeRow[] = [
-  { icon: PlaneTakeoff, label: 'Departure', sch: '16:43', est: '16:50', act: '16:50', actColor: 'text-fg-green' },
-  { icon: PlaneLanding, label: 'Arrival', sch: '06:22', est: '06:30+1', act: '_' },
+  { icon: icons.takeoff, label: 'Departure', sch: '16:43', est: '16:50', act: '16:50', actColor: 'text-fg-green' },
+  { icon: icons.landing, label: 'Arrival', sch: '06:22', est: '06:30+1', act: '_' },
 ]
 
 export function FlightTimesCard({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
-    <CollapsibleCard icon={Clock4} title="Flight Times" defaultOpen={defaultOpen}>
+    <CollapsibleCard icon={icons.clockCheck} title="Flight Times" defaultOpen={defaultOpen}>
       <div className="flex w-full items-center gap-2 px-4 text-sm text-fg-muted">
         <p className="flex-1 font-medium opacity-0">Departure</p>
         <p className="w-[70px] text-right font-extrabold">SCH</p>

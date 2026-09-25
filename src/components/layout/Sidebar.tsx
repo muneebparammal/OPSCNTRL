@@ -1,11 +1,11 @@
-import { Bell, LayoutGrid, Map, Plane, Share2 } from 'lucide-react'
+import { icons } from '../ui/Icon'
 
 const menuItems = [
-  { icon: LayoutGrid, label: 'Overview', active: false },
-  { icon: Map, label: 'Map', active: true },
-  { icon: Share2, label: 'Network', active: false },
-  { icon: LayoutGrid, label: 'Boards', active: false },
-  { icon: Bell, label: 'Alerts', active: false },
+  { icon: icons.overview, label: 'Overview', active: false },
+  { icon: icons.map, label: 'Map', active: true },
+  { icon: icons.network, label: 'Network', active: false },
+  { icon: icons.boards, label: 'Boards', active: false },
+  { icon: icons.bell, label: 'Alerts', active: false },
 ]
 
 type SidebarProps = {
@@ -22,7 +22,7 @@ export function Sidebar({ expanded = false }: SidebarProps) {
       <div className="flex w-full flex-col items-start gap-2 p-2">
         <div className="flex w-full items-center gap-2">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-ek p-2.5">
-            <Plane size={16} className="text-white" />
+            <icons.emirates size={16} className="text-white" />
           </div>
           {expanded && (
             <p className="truncate text-sm font-bold whitespace-nowrap text-fg-primary">

@@ -1,4 +1,4 @@
-import { Bookmark, Plane } from 'lucide-react'
+import { icons } from '../ui/Icon'
 import { Chip } from '../ui/Badge'
 
 export function FlightDetailHeader({
@@ -12,7 +12,7 @@ export function FlightDetailHeader({
     <div className="flex w-full flex-col gap-6">
       <div className="flex h-14 w-full items-start gap-2">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-ek">
-          <Plane size={20} className="text-white" />
+          <icons.plane size={20} className="text-white" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="text-2xl leading-7 font-bold text-fg-primary">{flightNumber}</p>
@@ -23,7 +23,7 @@ export function FlightDetailHeader({
         </div>
         <div className="flex shrink-0 items-center gap-4 pt-1">
           <button type="button" aria-label="Bookmark" className="text-fg-secondary">
-            <Bookmark size={24} />
+            <icons.bookmark size={24} />
           </button>
           <button
             type="button"
@@ -48,7 +48,7 @@ export function FlightDetailHeader({
           <p className="text-2xl leading-7 font-bold text-fg-secondary">DXB</p>
           <div className="relative flex h-[3px] flex-1 items-center rounded-lg bg-bg-green-muted">
             <div className="h-full w-[55%] rounded-lg bg-fg-green" />
-            <Plane
+            <icons.plane
               size={20}
               className="absolute text-fg-green"
               style={{ left: '55%', transform: 'translateX(-50%) rotate(90deg)' }}

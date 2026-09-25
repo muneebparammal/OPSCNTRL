@@ -1,18 +1,11 @@
-import {
-  CloudSun,
-  History,
-  PlaneLanding,
-  PlaneTakeoff,
-  ScanSearch,
-  ShieldAlert,
-  Target,
-} from 'lucide-react'
+import type { IconComponent } from '../ui/Icon'
+import { icons } from '../ui/Icon'
 import { useState } from 'react'
 import { useMapSelection } from '../../context/MapSelectionContext'
 import { Tooltip } from '../ui/Tooltip'
 
 type QuickLinkButtonProps = {
-  icon: React.ElementType
+  icon: IconComponent
   label: string
   active: boolean
   onClick: () => void
@@ -65,44 +58,44 @@ export function QuickLinksBar({
   return (
     <div className={`flex items-center justify-center gap-3 ${className}`}>
       <QuickLinkButton
-        icon={ScanSearch}
+        icon={icons.firBoundaries}
         label="FIR Boundaries"
         active={airspaceActive}
         onClick={() => onAirspaceClick?.()}
       />
       <QuickLinkButton
-        icon={Target}
+        icon={icons.dxbRing}
         label="DXB Ring"
         active={showDxbRing}
         onClick={() => setShowDxbRing(!showDxbRing)}
       />
       <QuickLinkButton
-        icon={History}
+        icon={icons.playback}
         label="Play Back"
         active={playBackActive}
         onClick={() => setPlayBackActive((v) => !v)}
       />
       <QuickLinkButton
-        icon={ShieldAlert}
+        icon={icons.notams}
         label="NOTAMs"
         active={notamsActive}
         onClick={() => setNotamsActive((v) => !v)}
         badge={10}
       />
       <QuickLinkButton
-        icon={CloudSun}
+        icon={icons.weather}
         label="Weather"
         active={showWeather}
         onClick={() => setShowWeather(!showWeather)}
       />
       <QuickLinkButton
-        icon={PlaneTakeoff}
+        icon={icons.takeoff}
         label={`Departures${airportSuffix}`}
         active={departureActive}
         onClick={() => setDepartureActive((v) => !v)}
       />
       <QuickLinkButton
-        icon={PlaneLanding}
+        icon={icons.landing}
         label={`Arrivals${airportSuffix}`}
         active={arrivalActive}
         onClick={() => setArrivalActive((v) => !v)}

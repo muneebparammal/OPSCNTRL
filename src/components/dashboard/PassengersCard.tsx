@@ -1,4 +1,4 @@
-import { UserRoundCheck } from "lucide-react";
+import { icons } from "../ui/Icon";
 import { useState } from "react";
 import { CollapsibleCard } from "../ui/Card";
 import { PillTabs } from "../ui/Tabs";
@@ -25,7 +25,7 @@ export function PassengersCard({
   const [tab, setTab] = useState("Passengers");
   return (
     <CollapsibleCard
-      icon={UserRoundCheck}
+      icon={icons.passengers}
       title="Passengers"
       defaultOpen={defaultOpen}
     >

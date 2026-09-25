@@ -1,3 +1,4 @@
+import type { IconComponent } from './Icon'
 import { useState } from 'react'
 
 type PillTabsProps = {
@@ -31,7 +32,7 @@ export function PillTabs({ tabs, defaultTab, className = '', value, onChange }: 
 }
 
 type IconTabsProps = {
-  items: { icon: React.ElementType; label: string; active?: boolean; badge?: number }[]
+  items: { icon: IconComponent; label: string; active?: boolean; badge?: number }[]
   className?: string
 }
 

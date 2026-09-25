@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronUp, type LucideIcon } from 'lucide-react'
+import { type IconComponent, icons } from './Icon'
 import { type ReactNode, useState } from 'react'
 
 type CollapsibleCardProps = {
-  icon: LucideIcon
+  icon: IconComponent
   title: string
   defaultOpen?: boolean
   children?: ReactNode
@@ -30,9 +30,9 @@ export function CollapsibleCard({
         </span>
         {hasContent &&
           (open ? (
-            <ChevronUp size={16} className="shrink-0 text-fg-secondary" />
+            <icons.chevronUp size={16} className="shrink-0 text-fg-secondary" />
           ) : (
-            <ChevronDown size={16} className="shrink-0 text-fg-secondary" />
+            <icons.chevronDown size={16} className="shrink-0 text-fg-secondary" />
           ))}
       </button>
       {hasContent && open && (

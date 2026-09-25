@@ -1,4 +1,4 @@
-import { Bookmark, Layers, PanelRight, Search, Settings } from 'lucide-react'
+import { icons } from '../ui/Icon'
 import { useState } from 'react'
 import { type AirportFilter, useMapSelection } from '../../context/MapSelectionContext'
 import type { MapStyleId } from './MapCanvas'
@@ -30,7 +30,7 @@ export function SearchTabsBar({
       >
         <div className="flex min-w-[160px] flex-1 flex-col gap-2">
           <div className="flex h-9 items-center gap-2 rounded-full border border-border-input bg-white px-3 py-1 shadow-xs">
-            <Search size={16} className="shrink-0 text-fg-muted" />
+            <icons.search size={16} className="shrink-0 text-fg-muted" />
             <input
               type="text"
               placeholder="Search aircraft, flights, route"
@@ -52,14 +52,14 @@ export function SearchTabsBar({
             aria-label="Settings"
             className="flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary"
           >
-            <Settings size={16} />
+            <icons.settings size={16} />
           </button>
           <button
             type="button"
             aria-label="Bookmarks"
             className="flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary"
           >
-            <Bookmark size={16} />
+            <icons.bookmark size={16} />
           </button>
           <button
             type="button"
@@ -67,7 +67,7 @@ export function SearchTabsBar({
             onClick={() => setShowMapType((v) => !v)}
             className="flex h-7 flex-1 items-center justify-center rounded-full text-fg-secondary"
           >
-            <Layers size={16} />
+            <icons.layers size={16} />
           </button>
           <button
             type="button"
@@ -78,7 +78,7 @@ export function SearchTabsBar({
               detailPanelActive ? 'bg-bg-primary shadow-sm' : ''
             }`}
           >
-            <PanelRight size={16} />
+            <icons.panelRight size={16} />
           </button>
         </div>
         {showMapType && (

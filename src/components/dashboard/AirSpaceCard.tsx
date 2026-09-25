@@ -1,4 +1,4 @@
-import { Radar, Search } from 'lucide-react'
+import { icons } from '../ui/Icon'
 import { useState } from 'react'
 import { useMapSelection } from '../../context/MapSelectionContext'
 import { firRegions } from '../../data/firRegions'
@@ -16,9 +16,9 @@ export function AirSpaceCard({ defaultOpen = false }: { defaultOpen?: boolean })
   )
 
   return (
-    <CollapsibleCard icon={Radar} title="Air Space" defaultOpen={defaultOpen}>
+    <CollapsibleCard icon={icons.airspace} title="Air Space" defaultOpen={defaultOpen}>
       <div className="flex h-9 w-full items-center gap-2 rounded-full border border-border-input bg-white px-3 py-1 shadow-xs">
-        <Search size={16} className="shrink-0 text-fg-muted" />
+        <icons.search size={16} className="shrink-0 text-fg-muted" />
         <input
           type="text"
           value={query}
