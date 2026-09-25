@@ -62,3 +62,9 @@ body {
 .maplibregl-marker:has(.group:hover) {
   z-index: 50;
 }
+
+/* Slight dark alpha over the basemap for legibility. Applied to the WebGL
+   canvas only, so DOM markers (aircraft, airports, NOTAMs) stay undimmed. */
+.maplibregl-canvas {
+  filter: brightness(0.9);
+}
