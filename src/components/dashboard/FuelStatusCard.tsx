@@ -148,36 +148,41 @@ function StatCard({
   )
 }
 
-function WeightCard({
-  icon: Icon,
-  label,
-  est,
-  act,
-  unit,
-  badge,
-}: {
+type Term = {
   icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
-  est: string
   act: string
-  unit: string
-  badge?: React.ReactNode
-}) {
+  est: string
+}
+
+function WeightBuildUp({ terms, unit }: { terms: [Term, Term, Term]; unit: string }) {
+  const [zfw, fuel, tow] = terms
+  const col = (t: Term, strong = false) => (
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 text-center">
+      <t.icon size={16} className="text-fg-muted" />
+      <p className="text-[11px] font-semibold whitespace-nowrap text-fg-muted">{t.label}</p>
+      <p
+        className={`text-base leading-5 font-bold ${strong ? 'text-fg-primary' : 'text-fg-secondary'}`}
+      >
+        {t.act}
+      </p>
+      <p className="text-[11px] text-fg-muted">est {t.est}</p>
+    </div>
+  )
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-2xl bg-bg-secondary px-4 py-3">
-      <div className="flex items-center gap-1.5 text-fg-secondary">
-        <Icon size={14} />
-        <p className="flex-1 text-xs font-extrabold whitespace-nowrap">{label}</p>
-        {badge}
-      </div>
-      <div className="flex items-end gap-1 text-fg-secondary">
-        <p className="text-xl leading-6 font-bold">{act}</p>
-        <p className="pb-0.5 text-xs tracking-[0.24px]">{unit} actual</p>
-      </div>
-      <div className="flex items-center gap-1 border-l-2 border-fg-grey-blue pl-1.5">
-        <p className="text-xs font-medium text-fg-tertiary">
-          Estimate {est} {unit}
+    <div className="flex w-full flex-col gap-2 border-t border-border-primary pt-3">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-xs font-extrabold tracking-wide text-fg-muted uppercase">
+          Weight build-up
         </p>
+        <p className="text-[11px] font-semibold text-fg-muted">{unit}</p>
+      </div>
+      <div className="flex w-full items-start">
+        {col(zfw)}
+        <span className="mt-6 w-3 text-center text-sm font-bold text-fg-muted">+</span>
+        {col(fuel)}
+        <span className="mt-6 w-3 text-center text-sm font-bold text-fg-muted">=</span>
+        {col(tow, true)}
       </div>
     </div>
   )
@@ -254,24 +259,19 @@ export function FuelStatusCard({
         <StatCard label="Planned burn" value={num(f.plannedBurn)} unit={unit} />
       </div>
 
-      <div className="flex w-full gap-2">
-        <WeightCard
-          icon={icons.takeoff}
-          label="Take-off weight"
-          act={num(f.towActual)}
-          est={num(f.towEstimate)}
-          unit={unit}
-          badge={<Delta actual={f.towActual} planned={f.towEstimate} />}
-        />
-        <WeightCard
-          icon={Weight}
-          label="Zero-fuel weight"
-          act={num(f.zfwActual)}
-          est={num(f.zfwEstimate)}
-          unit={unit}
-          badge={<Delta actual={f.zfwActual} planned={f.zfwEstimate} />}
-        />
-      </div>
+      <WeightBuildUp
+        unit={unit}
+        terms={[
+          { icon: Weight, label: 'Zero-fuel', act: num(f.zfwActual), est: num(f.zfwEstimate) },
+          { icon: Fuel, label: 'Fuel', act: num(f.fuelDepartActual), est: num(f.plannedFuel) },
+          {
+            icon: icons.takeoff,
+            label: 'Take-off',
+            act: num(f.towActual),
+            est: num(f.towEstimate),
+          },
+        ]}
+      />
       <Separator />
 
       <p className="px-1 text-[11px] text-fg-muted">
