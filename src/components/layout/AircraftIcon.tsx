@@ -1,3 +1,5 @@
+import yellowA380 from '../../assets/icons/yellow-4engine.svg'
+
 export const FLOW_COLORS = {
   departure: '#1c80cf',
   arrival: '#419544',
@@ -42,6 +44,23 @@ export function AircraftIcon({
   size?: number
 }) {
   const px = size ?? (fourEngine ? 34 : 22)
+  if (fourEngine && kind === 'arrival') {
+    // Supplied artwork points east, so rotate from heading - 90.
+    return (
+      <img
+        src={yellowA380}
+        alt=""
+        width={px}
+        height={px}
+        draggable={false}
+        style={{
+          transform: `rotate(${heading - 90}deg)`,
+          display: 'block',
+          filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.35))',
+        }}
+      />
+    )
+  }
   return (
     <svg
       width={px}
