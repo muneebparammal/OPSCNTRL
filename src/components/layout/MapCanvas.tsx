@@ -106,6 +106,35 @@ function useSimulatedFleet(count: number): SimAircraft[] {
   }, [count])
 }
 
+// Dubai International Airport (DXB)
+const DXB = { lng: 55.3644, lat: 25.2532 }
+const DXB_RING_RADII_NM = [20, 40, 60]
+
+// Approximates a circle as a GeoJSON polygon for the DXB range rings — a
+// decorative radar-style visualization, not an official controlled-airspace
+// boundary.
+function circleRing(lng: number, lat: number, radiusNm: number, points = 72) {
+  const radiusKm = radiusNm * 1.852
+  const coords: [number, number][] = []
+  const latRad = (lat * Math.PI) / 180
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * 2 * Math.PI
+    const offsetLat = (radiusKm / 111.32) * Math.sin(angle)
+    const offsetLng = (radiusKm / (111.32 * Math.cos(latRad))) * Math.cos(angle)
+    coords.push([lng + offsetLng, lat + offsetLat])
+  }
+  return { type: 'LineString' as const, coordinates: coords }
+}
+
+const dxbRingsGeoJson = {
+  type: 'FeatureCollection' as const,
+  features: DXB_RING_RADII_NM.map((r) => ({
+    type: 'Feature' as const,
+    properties: { radiusNm: r },
+    geometry: circleRing(DXB.lng, DXB.lat, r),
+  })),
+}
+
 function aircraftIcon(onGround: boolean, verticalRate: number | null) {
   if (onGround) return planeLightBlueOutline
   if (verticalRate != null && verticalRate > 1) return planeBlueSolid
@@ -131,7 +160,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
   const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
-  const { selectedFirId, showAllFirLayers } = useMapSelection()
+  const { selectedFirId, showAllFirLayers, showDxbRing, showWeather, setShowWeather } =
+    useMapSelection()
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => mapRef.current?.zoomIn(),
@@ -155,6 +185,12 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
       )
     }
   }, [selectedFir])
+
+  useEffect(() => {
+    if (showDxbRing) {
+      mapRef.current?.flyTo({ center: [DXB.lng, DXB.lat], zoom: 8, duration: 1000 })
+    }
+  }, [showDxbRing])
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-bg-secondary">
@@ -200,6 +236,32 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           </Source>
         )}
 
+        {showDxbRing && (
+          <Source id="dxb-rings" type="geojson" data={dxbRingsGeoJson}>
+            <Layer
+              id="dxb-rings-line"
+              type="line"
+              paint={{
+                'line-color': '#1c80cf',
+                'line-width': 1.5,
+                'line-dasharray': [3, 2],
+                'line-opacity': 0.85,
+              }}
+            />
+          </Source>
+        )}
+
+        {showDxbRing && (
+          <Marker longitude={DXB.lng} latitude={DXB.lat}>
+            <div className="flex flex-col items-center gap-1">
+              <div className="size-2.5 rounded-full border-2 border-white bg-fg-blue shadow-sm" />
+              <span className="rounded bg-fg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                DXB
+              </span>
+            </div>
+          </Marker>
+        )}
+
         {showLive
           ? liveFleet.map((a) => (
               <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
@@ -219,6 +281,34 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           clearly on top — matches the dark alpha treatment from the original
           design. pointer-events-none so it never blocks map interaction. */}
       <div className="pointer-events-none absolute inset-0 bg-black/15" />
+
+      {showWeather && (
+        <div className="absolute top-6 right-6 z-20 w-[360px] overflow-hidden rounded-2xl border border-border-primary bg-bg-primary shadow-popover">
+          <div className="flex items-center justify-between border-b border-border-primary px-4 py-2.5">
+            <p className="text-sm font-semibold text-fg-primary">Weather · Windy</p>
+            <button
+              type="button"
+              aria-label="Close weather"
+              onClick={() => setShowWeather(false)}
+              className="text-fg-secondary/70 hover:text-fg-secondary"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M18 6 6 18M6 6l12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <iframe
+            title="Windy weather map"
+            className="h-[280px] w-full border-0"
+            src={`https://embed.windy.com/embed2.html?lat=${DXB.lat}&lon=${DXB.lng}&detailLat=${DXB.lat}&detailLon=${DXB.lng}&zoom=5&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&metricWind=default&metricTemp=default&radarRange=-1`}
+          />
+        </div>
+      )}
 
       <div className="absolute bottom-6 left-6 z-10 flex items-center gap-1.5 rounded-full bg-bg-primary/90 px-3 py-1.5 text-xs font-semibold text-fg-secondary shadow-xs backdrop-blur">
         <span

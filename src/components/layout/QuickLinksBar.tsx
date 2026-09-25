@@ -1,31 +1,87 @@
 import { CloudSun, History, ScanSearch, ShieldAlert, Target } from 'lucide-react'
+import { useState } from 'react'
+import { useMapSelection } from '../../context/MapSelectionContext'
+import { Tooltip } from '../ui/Tooltip'
 
-const links = [
-  { icon: ScanSearch, label: 'Airspace' },
-  { icon: Target, label: 'DXB ring' },
-  { icon: History, label: 'Play Back' },
-  { icon: ShieldAlert, label: 'Notams', badge: 10 },
-  { icon: CloudSun, label: 'Weather' },
-]
+type QuickLinkButtonProps = {
+  icon: React.ElementType
+  label: string
+  active: boolean
+  onClick: () => void
+  badge?: number
+}
 
-export function QuickLinksBar({ className = '' }: { className?: string }) {
+function QuickLinkButton({ icon: Icon, label, active, onClick, badge }: QuickLinkButtonProps) {
+  return (
+    <Tooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={active}
+        onClick={onClick}
+        className={`relative flex size-12 items-center justify-center rounded-full shadow-xs transition-colors ${
+          active ? 'bg-fg-secondary text-white' : 'bg-bg-primary text-fg-secondary'
+        }`}
+      >
+        <Icon size={16} />
+        {badge !== undefined && (
+          <span className="absolute top-0.5 right-1.5 flex min-w-4 items-center justify-center rounded-full border border-white bg-fg-red px-1 py-0.5 text-xs font-semibold text-white">
+            {badge}
+          </span>
+        )}
+      </button>
+    </Tooltip>
+  )
+}
+
+type QuickLinksBarProps = {
+  className?: string
+  airspaceActive?: boolean
+  onAirspaceClick?: () => void
+}
+
+export function QuickLinksBar({
+  className = '',
+  airspaceActive = false,
+  onAirspaceClick,
+}: QuickLinksBarProps) {
+  const { showDxbRing, setShowDxbRing, showWeather, setShowWeather } = useMapSelection()
+  const [playBackActive, setPlayBackActive] = useState(false)
+  const [notamsActive, setNotamsActive] = useState(false)
+
   return (
     <div className={`flex items-center justify-center gap-3 ${className}`}>
-      {links.map(({ icon: Icon, label, badge }) => (
-        <button
-          key={label}
-          type="button"
-          aria-label={label}
-          className="relative flex size-12 items-center justify-center rounded-full bg-bg-primary shadow-xs"
-        >
-          <Icon size={16} className="text-fg-secondary" />
-          {badge !== undefined && (
-            <span className="absolute top-0.5 right-1.5 flex min-w-4 items-center justify-center rounded-full border border-white bg-fg-red px-1 py-0.5 text-xs font-semibold text-white">
-              {badge}
-            </span>
-          )}
-        </button>
-      ))}
+      <QuickLinkButton
+        icon={ScanSearch}
+        label="FIR Boundaries"
+        active={airspaceActive}
+        onClick={() => onAirspaceClick?.()}
+      />
+      <QuickLinkButton
+        icon={Target}
+        label="DXB Ring"
+        active={showDxbRing}
+        onClick={() => setShowDxbRing(!showDxbRing)}
+      />
+      <QuickLinkButton
+        icon={History}
+        label="Play Back"
+        active={playBackActive}
+        onClick={() => setPlayBackActive((v) => !v)}
+      />
+      <QuickLinkButton
+        icon={ShieldAlert}
+        label="NOTAMs"
+        active={notamsActive}
+        onClick={() => setNotamsActive((v) => !v)}
+        badge={10}
+      />
+      <QuickLinkButton
+        icon={CloudSun}
+        label="Weather"
+        active={showWeather}
+        onClick={() => setShowWeather(!showWeather)}
+      />
     </div>
   )
 }

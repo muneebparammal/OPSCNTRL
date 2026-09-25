@@ -75,6 +75,8 @@ export function DashboardShell({
               className={`absolute bottom-6 ${
                 sheetOpen ? 'left-[calc(50%-220px)]' : 'left-1/2'
               } -translate-x-1/2`}
+              airspaceActive={sheetOpen}
+              onAirspaceClick={() => setSheetOpen((v) => !v)}
             />
 
             {sheetContent && (
