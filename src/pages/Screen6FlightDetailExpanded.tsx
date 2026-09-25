@@ -11,6 +11,7 @@ export default function Screen6FlightDetailExpanded() {
     <DashboardShell
       sheetTitle={(onClose) => <FlightDetailHeader onClose={onClose} />}
       hideSheetClose
+      defaultSheetOpen
       sheetContent={
         <>
           <FlightInfoCard defaultOpen />

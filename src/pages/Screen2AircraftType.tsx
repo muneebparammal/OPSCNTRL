@@ -8,6 +8,7 @@ export default function Screen2AircraftType() {
   return (
     <DashboardShell
       sheetTitle={<SheetSimpleHeader />}
+      defaultSheetOpen
       sheetContent={
         <>
           <AircraftTypeCard defaultOpen />

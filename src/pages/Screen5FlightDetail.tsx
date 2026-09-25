@@ -11,6 +11,7 @@ export default function Screen5FlightDetail() {
     <DashboardShell
       sheetTitle={(onClose) => <FlightDetailHeader onClose={onClose} />}
       hideSheetClose
+      defaultSheetOpen
       sheetContent={
         <>
           <FlightInfoCard defaultOpen />

@@ -8,6 +8,7 @@ export default function Screen3FlightStatus() {
   return (
     <DashboardShell
       sheetTitle={<SheetSimpleHeader />}
+      defaultSheetOpen
       sheetContent={
         <>
           <AircraftTypeCard />

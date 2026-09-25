@@ -8,6 +8,7 @@ export default function Screen7AirSpace() {
   return (
     <DashboardShell
       sheetTitle={<SheetSimpleHeader />}
+      defaultSheetOpen
       sheetContent={
         <>
           <AircraftTypeCard />
