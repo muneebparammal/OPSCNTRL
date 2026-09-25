@@ -16,7 +16,7 @@ export function FuelStatusCard({
 }) {
   const f = getFuelStatus(displayCallsign(callsign))
   const [unit, setUnit] = useState<Unit>('KG')
-  const [option, setOption] = useState<(typeof FUEL_OPTIONS)[number]['id']>('A')
+  const [option, setOption] = useState<(typeof FUEL_OPTIONS)[number]['id']>('F')
   const conv = (kg: number) => (unit === 'KG' ? kg : kg / f.density)
   const num = (kg: number) => Math.round(conv(kg)).toLocaleString()
   const fmt = (kg: number) => `${Math.round(conv(kg)).toLocaleString()} ${unit}`

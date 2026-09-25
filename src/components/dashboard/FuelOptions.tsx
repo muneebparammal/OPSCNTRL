@@ -1,4 +1,4 @@
-import { Fuel, Weight } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Fuel, MinusCircle, Weight, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import type { FuelStatus } from '../../data/fuelStatus'
 import { Separator } from '../ui/Card'
@@ -279,7 +279,216 @@ export function OptionE(p: FuelProps) {
   )
 }
 
+// F — NCC validation: rule checks with expected vs actual, so an officer can
+// confirm a load/fuel record in seconds.
+type Level = 'pass' | 'warn' | 'fail' | 'na'
+type Check = { label: string; expected: string; actual: string; delta: string; level: Level }
+
+const TOL = { fuel: 2, weight: 1, identity: 0.5, reserveMin: 10 }
+const LEVEL_STYLE: Record<
+  Level,
+  { icon: React.ComponentType<{ size?: number; className?: string }>; cls: string; bg: string }
+> = {
+  pass: { icon: CheckCircle2, cls: 'text-fg-green', bg: 'bg-bg-green-subtle' },
+  warn: { icon: AlertTriangle, cls: 'text-[#f08c00]', bg: 'bg-bg-orange-inverse' },
+  fail: { icon: XCircle, cls: 'text-fg-red', bg: 'bg-bg-red-subtle' },
+  na: { icon: MinusCircle, cls: 'text-fg-muted', bg: 'bg-bg-secondary' },
+}
+
+function pctLevel(diffPct: number, tol: number): Level {
+  const d = Math.abs(diffPct)
+  return d <= tol ? 'pass' : d <= tol * 2.5 ? 'warn' : 'fail'
+}
+
+function buildChecks({ f, num, unit }: FuelProps): Check[] {
+  const pct = (a: number, b: number) => (b ? ((a - b) / b) * 100 : 0)
+  const sgn = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(1)}%`
+  const has = (...v: number[]) => v.every((x) => x > 0)
+  const na = (label: string): Check => ({
+    label,
+    expected: '—',
+    actual: '—',
+    delta: 'no data',
+    level: 'na',
+  })
+  const out: Check[] = []
+
+  out.push(
+    has(f.fuelDepartActual, f.plannedFuel)
+      ? {
+          label: 'Departure fuel vs plan',
+          expected: num(f.plannedFuel),
+          actual: num(f.fuelDepartActual),
+          delta: sgn(pct(f.fuelDepartActual, f.plannedFuel)),
+          level: pctLevel(pct(f.fuelDepartActual, f.plannedFuel), TOL.fuel),
+        }
+      : na('Departure fuel vs plan'),
+  )
+  out.push(
+    has(f.towActual, f.towEstimate)
+      ? {
+          label: 'Take-off weight vs estimate',
+          expected: num(f.towEstimate),
+          actual: num(f.towActual),
+          delta: sgn(pct(f.towActual, f.towEstimate)),
+          level: pctLevel(pct(f.towActual, f.towEstimate), TOL.weight),
+        }
+      : na('Take-off weight vs estimate'),
+  )
+  out.push(
+    has(f.zfwActual, f.zfwEstimate)
+      ? {
+          label: 'Zero-fuel weight vs estimate',
+          expected: num(f.zfwEstimate),
+          actual: num(f.zfwActual),
+          delta: sgn(pct(f.zfwActual, f.zfwEstimate)),
+          level: pctLevel(pct(f.zfwActual, f.zfwEstimate), TOL.weight),
+        }
+      : na('Zero-fuel weight vs estimate'),
+  )
+  out.push(
+    has(f.towActual)
+      ? {
+          label: 'Take-off weight within MTOW',
+          expected: `≤ ${num(MTOW)}`,
+          actual: num(f.towActual),
+          delta: `${num(MTOW - f.towActual)} spare`,
+          level: f.towActual > MTOW ? 'fail' : f.towActual > MTOW * 0.97 ? 'warn' : 'pass',
+        }
+      : na('Take-off weight within MTOW'),
+  )
+  out.push(
+    has(f.towActual, f.zfwActual, f.fuelDepartActual)
+      ? (() => {
+          const sum = f.zfwActual + f.fuelDepartActual
+          const d = pct(f.towActual, sum)
+          return {
+            label: 'TOW = zero-fuel + fuel',
+            expected: num(sum),
+            actual: num(f.towActual),
+            delta: sgn(d),
+            level: pctLevel(d, TOL.identity),
+          } as Check
+        })()
+      : na('TOW = zero-fuel + fuel'),
+  )
+  out.push(
+    has(f.plannedFuel, f.plannedBurn)
+      ? (() => {
+          const reserve = ((f.plannedFuel - f.plannedBurn) / f.plannedFuel) * 100
+          return {
+            label: 'Reserve after planned burn',
+            expected: `≥ ${TOL.reserveMin}%`,
+            actual: `${reserve.toFixed(0)}% · ${num(f.plannedFuel - f.plannedBurn)}`,
+            delta: reserve >= TOL.reserveMin ? 'ok' : 'low',
+            level: reserve >= TOL.reserveMin ? 'pass' : reserve >= 5 ? 'warn' : 'fail',
+          } as Check
+        })()
+      : na('Reserve after planned burn'),
+  )
+  out.push(
+    has(f.fuelDepartActual, f.fuelOnBoard)
+      ? {
+          label: 'Fuel sequence (dep ≥ on board ≥ arrival)',
+          expected: `${num(f.fuelDepartActual)} ≥ ${num(f.fuelOnBoard)}`,
+          actual: `arr ${num(f.fuelArriveActual)}`,
+          delta:
+            f.fuelDepartActual >= f.fuelOnBoard && f.fuelOnBoard >= f.fuelArriveActual
+              ? 'ok'
+              : 'error',
+          level:
+            f.fuelDepartActual >= f.fuelOnBoard && f.fuelOnBoard >= f.fuelArriveActual
+              ? 'pass'
+              : 'fail',
+        }
+      : na('Fuel sequence (dep ≥ on board ≥ arrival)'),
+  )
+  void unit
+  return out
+}
+
+export function OptionF(p: FuelProps) {
+  const { f, unit, num, fmt } = p
+  const checks = buildChecks(p)
+  const graded = checks.filter((c) => c.level !== 'na')
+  const fails = checks.filter((c) => c.level === 'fail').length
+  const warns = checks.filter((c) => c.level === 'warn').length
+  const passes = checks.filter((c) => c.level === 'pass').length
+  const overall: Level = !graded.length ? 'na' : fails ? 'fail' : warns ? 'warn' : 'pass'
+  const title = {
+    pass: 'Validated',
+    warn: 'Review needed',
+    fail: 'Discrepancy found',
+    na: 'Awaiting data',
+  }[overall]
+  const Overall = LEVEL_STYLE[overall]
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${Overall.bg}`}>
+        <Overall.icon size={28} className={Overall.cls} />
+        <div className="flex-1">
+          <p className="text-base leading-5 font-bold text-fg-primary">{title}</p>
+          <p className="text-xs text-fg-tertiary">
+            {graded.length
+              ? `${passes}/${checks.length} checks passed`
+              : 'No fuel or weight data received yet'}
+            {warns > 0 && ` · ${warns} to review`}
+            {fails > 0 && ` · ${fails} failed`}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-1.5">
+        {[
+          ['On board', fmt(f.fuelOnBoard)],
+          ['Departed', num(f.fuelDepartActual)],
+          ['TOW', num(f.towActual)],
+          ['ZFW', num(f.zfwActual)],
+        ].map(([l, v]) => (
+          <div key={l} className="rounded-xl bg-bg-secondary px-2 py-1.5 text-center">
+            <p className="text-[10px] font-extrabold text-fg-muted uppercase">{l}</p>
+            <p className="text-xs font-bold whitespace-nowrap text-fg-primary">{v}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex w-full flex-col">
+        <div className="flex px-1 pb-1 text-[10px] font-extrabold text-fg-muted uppercase">
+          <span className="flex-1">Check</span>
+          <span className="w-20 text-right">Actual</span>
+          <span className="w-16 text-right">Δ</span>
+          <span className="w-6" />
+        </div>
+        {checks.map((c) => {
+          const st = LEVEL_STYLE[c.level]
+          return (
+            <div
+              key={c.label}
+              className="flex items-center border-t border-border-primary px-1 py-2"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-xs leading-4 font-semibold text-fg-primary">{c.label}</p>
+                <p className="text-[11px] text-fg-muted">expected {c.expected}</p>
+              </div>
+              <p className="w-20 text-right text-xs font-bold text-fg-primary">{c.actual}</p>
+              <p className={`w-16 text-right text-[11px] font-semibold ${st.cls}`}>{c.delta}</p>
+              <span className="flex w-6 justify-end">
+                <st.icon size={16} className={st.cls} />
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <p className="text-[11px] text-fg-muted">
+        Tolerances: fuel ±{TOL.fuel}% · weights ±{TOL.weight}% · TOW identity ±{TOL.identity}% ·
+        reserve ≥{TOL.reserveMin}% · units {unit}
+      </p>
+    </div>
+  )
+}
+
 export const FUEL_OPTIONS = [
+  { id: 'F', name: 'NCC validation', Component: OptionF },
   { id: 'A', name: 'Meter + tiles', Component: OptionA },
   { id: 'B', name: 'Ledger', Component: OptionB },
   { id: 'C', name: 'KPI mosaic', Component: OptionC },
