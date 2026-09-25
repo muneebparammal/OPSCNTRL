@@ -19,6 +19,7 @@ import { useMapSelection } from '../../context/MapSelectionContext'
 import { airports } from '../../data/airports'
 import firBoundaries from '../../data/firBoundaries.geojson?url'
 import { firRegions } from '../../data/firRegions'
+import { estimateRoute } from './routeGeometry'
 import { useLiveFleet } from '../../hooks/useLiveFleet'
 import { useRainRadar } from '../../hooks/useRainRadar'
 import { Tooltip } from '../ui/Tooltip'
@@ -170,6 +171,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     showAllFirLayers,
     showDxbRing,
     showWeather,
+    selectedFlight,
     setSelectedFlight,
     showAirportsLayer,
     selectedAirportIcao,
@@ -193,6 +195,42 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   }))
 
   const showLive = status === 'live' && liveFleet.length > 0
+
+  const routeGeoJson = useMemo(() => {
+    if (!selectedFlight?.position) return null
+    const latest =
+      [...liveFleet, ...emiratesFleet].find((a) => a.callsign === selectedFlight.callsign) ??
+      selectedFlight.position
+    const { solid, dashed } = estimateRoute(latest, [DXB.lng, DXB.lat])
+    const line = (kind: string, coordinates: number[][]) => ({
+      type: 'Feature' as const,
+      properties: { kind },
+      geometry: { type: 'LineString' as const, coordinates },
+    })
+    return {
+      type: 'FeatureCollection' as const,
+      features: [line('solid', solid), line('dashed', dashed)],
+    }
+  }, [selectedFlight, liveFleet, emiratesFleet])
+
+  const selectedCallsign = selectedFlight?.callsign
+  useEffect(() => {
+    const pos = selectedFlight?.position
+    if (!pos) return
+    const minLng = Math.min(pos.lng, DXB.lng)
+    const maxLng = Math.max(pos.lng, DXB.lng)
+    const minLat = Math.min(pos.lat, DXB.lat)
+    const maxLat = Math.max(pos.lat, DXB.lat)
+    mapRef.current?.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { padding: { top: 100, bottom: 120, left: 80, right: 500 }, duration: 900, maxZoom: 6 },
+    )
+    // Only re-fit when a different flight is picked, not on every position update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCallsign])
 
   const selectedFir = firRegions.find((r) => r.id === selectedFirId)
 
@@ -319,6 +357,40 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             )
           })}
 
+        {routeGeoJson && (
+          <Source id="flight-route" type="geojson" data={routeGeoJson}>
+            <Layer
+              id="flight-route-line"
+              type="line"
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+              paint={{ 'line-color': '#d71921', 'line-width': 3, 'line-opacity': 0.95 }}
+              filter={['==', ['get', 'kind'], 'solid']}
+            />
+            <Layer
+              id="flight-route-projection"
+              type="line"
+              paint={{
+                'line-color': '#d71921',
+                'line-width': 2.5,
+                'line-opacity': 0.6,
+                'line-dasharray': [2, 2],
+              }}
+              filter={['==', ['get', 'kind'], 'dashed']}
+            />
+          </Source>
+        )}
+
+        {routeGeoJson && (
+          <Marker longitude={DXB.lng} latitude={DXB.lat}>
+            <div className="flex flex-col items-center gap-1">
+              <div className="size-3 rounded-full border-2 border-white bg-brand-ek shadow-sm" />
+              <span className="rounded bg-fg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                DXB
+              </span>
+            </div>
+          </Marker>
+        )}
+
         {showWeather && radarTileUrl && (
           <Source id="weather-radar" type="raster" tiles={[radarTileUrl]} tileSize={256}>
             <Layer id="weather-radar-layer" type="raster" paint={{ 'raster-opacity': 0.55 }} />
@@ -338,6 +410,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                         callsign: a.callsign,
                         altitude: a.altitude,
                         live: a,
+                        position: { lng: a.lng, lat: a.lat, heading: a.heading },
                       })
                     }
                     className="cursor-pointer border-0 bg-transparent p-0"
@@ -358,6 +431,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                     setSelectedFlight({
                       callsign: `EK${100 + i}`,
                       altitude: null,
+                      position: { lng: a.lng, lat: a.lat, heading: a.heading },
                     })
                   }
                   className="cursor-pointer border-0 bg-transparent p-0"
@@ -380,6 +454,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
                         callsign: a.callsign,
                         altitude: a.altitude,
                         live: a,
+                        position: { lng: a.lng, lat: a.lat, heading: a.heading },
                       })
                     }
                     className={`cursor-pointer rounded-full border-0 p-0 ${

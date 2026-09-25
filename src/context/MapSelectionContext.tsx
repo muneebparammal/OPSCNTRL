@@ -7,6 +7,7 @@ export type SelectedFlight = {
   callsign: string
   altitude: number | null
   live?: LiveAircraft
+  position?: { lng: number; lat: number; heading: number }
 }
 
 type MapSelectionContextValue = {
