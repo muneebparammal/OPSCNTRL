@@ -1,4 +1,12 @@
-import { CloudSun, History, ScanSearch, ShieldAlert, Target } from 'lucide-react'
+import {
+  CloudSun,
+  History,
+  PlaneLanding,
+  PlaneTakeoff,
+  ScanSearch,
+  ShieldAlert,
+  Target,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useMapSelection } from '../../context/MapSelectionContext'
 import { Tooltip } from '../ui/Tooltip'
@@ -48,6 +56,8 @@ export function QuickLinksBar({
   const { showDxbRing, setShowDxbRing, showWeather, setShowWeather } = useMapSelection()
   const [playBackActive, setPlayBackActive] = useState(false)
   const [notamsActive, setNotamsActive] = useState(false)
+  const [departureActive, setDepartureActive] = useState(false)
+  const [arrivalActive, setArrivalActive] = useState(false)
 
   return (
     <div className={`flex items-center justify-center gap-3 ${className}`}>
@@ -81,6 +91,18 @@ export function QuickLinksBar({
         label="Weather"
         active={showWeather}
         onClick={() => setShowWeather(!showWeather)}
+      />
+      <QuickLinkButton
+        icon={PlaneTakeoff}
+        label="Departure"
+        active={departureActive}
+        onClick={() => setDepartureActive((v) => !v)}
+      />
+      <QuickLinkButton
+        icon={PlaneLanding}
+        label="Arrival"
+        active={arrivalActive}
+        onClick={() => setArrivalActive((v) => !v)}
       />
     </div>
   )
