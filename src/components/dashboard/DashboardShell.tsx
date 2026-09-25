@@ -25,10 +25,6 @@ type DashboardShellProps = {
   breadcrumb?: string
   mapTypeDefaultOpen?: boolean
   topExtra?: ReactNode
-  sheetTitle?: ReactNode | ((onClose: () => void) => ReactNode)
-  sheetContent?: ReactNode
-  hideSheetClose?: boolean
-  defaultSheetOpen?: boolean
 }
 
 export function DashboardShell(props: DashboardShellProps) {
@@ -43,12 +39,8 @@ function DashboardShellInner({
   breadcrumb = 'Operations Timeline',
   mapTypeDefaultOpen = false,
   topExtra,
-  sheetTitle,
-  sheetContent,
-  hideSheetClose = false,
-  defaultSheetOpen = false,
 }: DashboardShellProps) {
-  const [sheetOpen, setSheetOpen] = useState(defaultSheetOpen)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
   const [dark, setDark] = useState(() => {
     try {
@@ -58,9 +50,6 @@ function DashboardShellInner({
     }
   })
   const [mapType, setMapType] = useState<MapStyleId>(dark ? 'dark' : 'light')
-  // The screen's own sheet content (e.g. the flight-detail demo screens) only
-  // shows for the initial open; the side-panel button always opens Flight Layers.
-  const [showScreenContent, setShowScreenContent] = useState(defaultSheetOpen)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -90,7 +79,6 @@ function DashboardShellInner({
 
   const closeSheet = () => {
     setSheetOpen(false)
-    setShowScreenContent(false)
     setSelectedFlight(null)
     setSelectedAirportIcao(null)
     setSelectedNotamId(null)
@@ -111,8 +99,6 @@ function DashboardShellInner({
     <AirportStatsCards airport={selectedAirport} />
   ) : selectedNotam ? (
     <NotamDetailCards notam={selectedNotam} />
-  ) : showScreenContent && sheetContent ? (
-    sheetContent
   ) : (
     <FlightLayersPanel />
   )
@@ -122,21 +108,10 @@ function DashboardShellInner({
     <AirportDetailHeader airport={selectedAirport} onClose={closeSheet} />
   ) : selectedNotam ? (
     <NotamDetailHeader notam={selectedNotam} onClose={closeSheet} />
-  ) : showScreenContent && sheetTitle ? (
-    typeof sheetTitle === 'function' ? (
-      sheetTitle(closeSheet)
-    ) : (
-      sheetTitle
-    )
   ) : (
     <SheetSimpleHeader />
   )
-  const activeHideSheetClose =
-    selectedFlight || selectedAirport || selectedNotam
-      ? true
-      : showScreenContent
-        ? hideSheetClose
-        : false
+  const activeHideSheetClose = Boolean(selectedFlight || selectedAirport || selectedNotam)
   const isSheetOpen =
     sheetOpen || Boolean(selectedFlight) || Boolean(selectedAirport) || Boolean(selectedNotam)
 
