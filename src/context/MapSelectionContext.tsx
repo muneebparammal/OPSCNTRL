@@ -2,6 +2,11 @@ import { createContext, type ReactNode, useContext, useState } from 'react'
 
 export type AirportFilter = 'ALL' | 'DXB' | 'DWC'
 
+export type SelectedFlight = {
+  callsign: string
+  altitude: number | null
+}
+
 type MapSelectionContextValue = {
   selectedFirId: string | null
   setSelectedFirId: (id: string | null) => void
@@ -13,6 +18,8 @@ type MapSelectionContextValue = {
   setShowWeather: (show: boolean) => void
   airportFilter: AirportFilter
   setAirportFilter: (airport: AirportFilter) => void
+  selectedFlight: SelectedFlight | null
+  setSelectedFlight: (flight: SelectedFlight | null) => void
 }
 
 const MapSelectionContext = createContext<MapSelectionContextValue | null>(null)
@@ -23,6 +30,7 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
   const [showDxbRing, setShowDxbRing] = useState(false)
   const [showWeather, setShowWeather] = useState(false)
   const [airportFilter, setAirportFilter] = useState<AirportFilter>('ALL')
+  const [selectedFlight, setSelectedFlight] = useState<SelectedFlight | null>(null)
   return (
     <MapSelectionContext.Provider
       value={{
@@ -36,6 +44,8 @@ export function MapSelectionProvider({ children }: { children: ReactNode }) {
         setShowWeather,
         airportFilter,
         setAirportFilter,
+        selectedFlight,
+        setSelectedFlight,
       }}
     >
       {children}

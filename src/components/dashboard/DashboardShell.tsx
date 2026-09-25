@@ -1,5 +1,11 @@
 import { type ReactNode, useRef, useState } from 'react'
-import { MapSelectionProvider } from '../../context/MapSelectionContext'
+import { MapSelectionProvider, useMapSelection } from '../../context/MapSelectionContext'
+import { ConnectingPassengersCard } from './ConnectingPassengersCard'
+import { FlightDetailHeader } from './FlightDetailHeader'
+import { FlightTimesCard } from './FlightTimesCard'
+import { CrewComplementCard } from './HubCrewCards'
+import { FlightInfoCard } from './InfoCards'
+import { PassengersCard } from './PassengersCard'
 import { MapCanvas, type MapCanvasHandle, type MapStyleId } from '../layout/MapCanvas'
 import { NavBar } from '../layout/NavBar'
 import { QuickLinksBar } from '../layout/QuickLinksBar'
@@ -18,7 +24,15 @@ type DashboardShellProps = {
   defaultSheetOpen?: boolean
 }
 
-export function DashboardShell({
+export function DashboardShell(props: DashboardShellProps) {
+  return (
+    <MapSelectionProvider>
+      <DashboardShellInner {...props} />
+    </MapSelectionProvider>
+  )
+}
+
+function DashboardShellInner({
   breadcrumb = 'Operations Timeline',
   mapTypeDefaultOpen = false,
   topExtra,
@@ -32,70 +46,93 @@ export function DashboardShell({
   const [mapType, setMapType] = useState<MapStyleId>('light')
   const [zoomPercent, setZoomPercent] = useState(100)
   const mapRef = useRef<MapCanvasHandle>(null)
+  const { selectedFlight, setSelectedFlight } = useMapSelection()
+
+  const closeSheet = () => {
+    setSheetOpen(false)
+    setSelectedFlight(null)
+  }
+
+  // Clicking an aircraft on the map overrides whatever this screen's own
+  // sheet content is with that flight's detail view, and opens the panel.
+  const activeSheetContent = selectedFlight ? (
+    <>
+      <FlightInfoCard defaultOpen />
+      <FlightTimesCard />
+      <PassengersCard />
+      <ConnectingPassengersCard />
+      <CrewComplementCard />
+    </>
+  ) : (
+    sheetContent
+  )
+  const activeSheetTitle = selectedFlight ? (
+    <FlightDetailHeader onClose={closeSheet} flightNumber={selectedFlight.callsign} />
+  ) : typeof sheetTitle === 'function' ? (
+    sheetTitle(closeSheet)
+  ) : (
+    sheetTitle
+  )
+  const activeHideSheetClose = selectedFlight ? true : hideSheetClose
+  const isSheetOpen = sheetOpen || Boolean(selectedFlight)
 
   return (
-    <MapSelectionProvider>
-      <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
-        <Sidebar expanded={sidebarExpanded} />
-        <div className="flex h-full flex-1 flex-col">
-          <NavBar
-            breadcrumb={breadcrumb}
-            sidebarExpanded={sidebarExpanded}
-            onToggleSidebar={() => setSidebarExpanded((v) => !v)}
-          />
-          <div className="relative flex-1 overflow-hidden">
-            <MapCanvas ref={mapRef} mapType={mapType} onZoomChange={setZoomPercent} />
+    <div className="flex h-screen w-screen overflow-hidden bg-bg-primary">
+      <Sidebar expanded={sidebarExpanded} />
+      <div className="flex h-full flex-1 flex-col">
+        <NavBar
+          breadcrumb={breadcrumb}
+          sidebarExpanded={sidebarExpanded}
+          onToggleSidebar={() => setSidebarExpanded((v) => !v)}
+        />
+        <div className="relative flex-1 overflow-hidden">
+          <MapCanvas ref={mapRef} mapType={mapType} onZoomChange={setZoomPercent} />
 
-            <div
-              className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
-                sheetOpen ? 'right-[440px]' : 'right-0'
-              }`}
-            >
-              <SearchTabsBar
-                narrow={sheetOpen}
-                mapTypeDefaultOpen={mapTypeDefaultOpen}
-                detailPanelActive={sheetOpen}
-                onToggleDetailPanel={() => setSheetOpen((v) => !v)}
-                mapType={mapType}
-                onMapTypeChange={setMapType}
-              />
-            </div>
-
-            {topExtra}
-
-            <ZoomControls
-              className={`absolute bottom-6 ${sheetOpen ? 'right-[464px]' : 'right-6'}`}
-              percent={zoomPercent}
-              onZoomIn={() => mapRef.current?.zoomIn()}
-              onZoomOut={() => mapRef.current?.zoomOut()}
-              onReset={() => mapRef.current?.resetZoom()}
+          <div
+            className={`absolute top-6 left-0 flex items-start justify-between px-0 ${
+              isSheetOpen ? 'right-[440px]' : 'right-0'
+            }`}
+          >
+            <SearchTabsBar
+              narrow={isSheetOpen}
+              mapTypeDefaultOpen={mapTypeDefaultOpen}
+              detailPanelActive={isSheetOpen}
+              onToggleDetailPanel={() => (selectedFlight ? closeSheet() : setSheetOpen((v) => !v))}
+              mapType={mapType}
+              onMapTypeChange={setMapType}
             />
-
-            <QuickLinksBar
-              className={`absolute bottom-6 ${
-                sheetOpen ? 'left-[calc(50%-220px)]' : 'left-1/2'
-              } -translate-x-1/2`}
-              airspaceActive={sheetOpen}
-              onAirspaceClick={() => setSheetOpen((v) => !v)}
-            />
-
-            {sheetContent && (
-              <Sheet
-                open={sheetOpen}
-                onClose={() => setSheetOpen(false)}
-                title={
-                  typeof sheetTitle === 'function'
-                    ? sheetTitle(() => setSheetOpen(false))
-                    : sheetTitle
-                }
-                hideDefaultClose={hideSheetClose}
-              >
-                {sheetContent}
-              </Sheet>
-            )}
           </div>
+
+          {topExtra}
+
+          <ZoomControls
+            className={`absolute bottom-6 ${isSheetOpen ? 'right-[464px]' : 'right-6'}`}
+            percent={zoomPercent}
+            onZoomIn={() => mapRef.current?.zoomIn()}
+            onZoomOut={() => mapRef.current?.zoomOut()}
+            onReset={() => mapRef.current?.resetZoom()}
+          />
+
+          <QuickLinksBar
+            className={`absolute bottom-6 ${
+              isSheetOpen ? 'left-[calc(50%-220px)]' : 'left-1/2'
+            } -translate-x-1/2`}
+            airspaceActive={isSheetOpen}
+            onAirspaceClick={() => (selectedFlight ? closeSheet() : setSheetOpen((v) => !v))}
+          />
+
+          {activeSheetContent && (
+            <Sheet
+              open={isSheetOpen}
+              onClose={closeSheet}
+              title={activeSheetTitle}
+              hideDefaultClose={activeHideSheetClose}
+            >
+              {activeSheetContent}
+            </Sheet>
+          )}
         </div>
       </div>
-    </MapSelectionProvider>
+    </div>
   )
 }

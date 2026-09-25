@@ -1,7 +1,13 @@
 import { Bookmark, Plane } from 'lucide-react'
 import { Chip } from '../ui/Badge'
 
-export function FlightDetailHeader({ onClose }: { onClose?: () => void }) {
+export function FlightDetailHeader({
+  onClose,
+  flightNumber = 'EK878',
+}: {
+  onClose?: () => void
+  flightNumber?: string
+}) {
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex h-14 w-full items-start gap-2">
@@ -9,7 +15,7 @@ export function FlightDetailHeader({ onClose }: { onClose?: () => void }) {
           <Plane size={20} className="text-white" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-2xl leading-7 font-bold text-fg-primary">EK878</p>
+          <p className="text-2xl leading-7 font-bold text-fg-primary">{flightNumber}</p>
           <div className="flex items-center gap-2">
             <p className="text-sm font-bold text-fg-tertiary">A380</p>
             <Chip tone="grey-blue">ENRT</Chip>

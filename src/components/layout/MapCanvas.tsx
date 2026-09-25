@@ -161,7 +161,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const { aircraft: liveFleet, status, lastUpdated } = useLiveFleet()
   const simulatedFleet = useSimulatedFleet(70)
   const mapRef = useRef<MapRef>(null)
-  const { selectedFirId, showAllFirLayers, showDxbRing, showWeather } = useMapSelection()
+  const { selectedFirId, showAllFirLayers, showDxbRing, showWeather, setSelectedFlight } =
+    useMapSelection()
   const radarTileUrl = useRainRadar()
 
   useImperativeHandle(ref, () => ({
@@ -272,14 +273,26 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         {showLive
           ? liveFleet.map((a) => (
               <Marker key={a.id} longitude={a.lng} latitude={a.lat}>
-                <div title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}>
+                <button
+                  type="button"
+                  title={`${a.callsign}${a.altitude != null ? ` · FL${Math.round(a.altitude / 30.48)}` : ''}`}
+                  onClick={() => setSelectedFlight({ callsign: a.callsign, altitude: a.altitude })}
+                  className="cursor-pointer border-0 bg-transparent p-0"
+                >
                   <PlaneMarker icon={aircraftIcon(a.onGround, a.verticalRate)} heading={a.heading} />
-                </div>
+                </button>
               </Marker>
             ))
           : simulatedFleet.map((a, i) => (
               <Marker key={i} longitude={a.lng} latitude={a.lat}>
-                <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
+                <button
+                  type="button"
+                  title={`EK${100 + i}`}
+                  onClick={() => setSelectedFlight({ callsign: `EK${100 + i}`, altitude: null })}
+                  className="cursor-pointer border-0 bg-transparent p-0"
+                >
+                  <PlaneMarker icon={a.icon} heading={a.heading} size={a.size} />
+                </button>
               </Marker>
             ))}
       </Map>
